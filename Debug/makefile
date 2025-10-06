@@ -60,8 +60,8 @@ all: main-build
 main-build: msw.elf secondary-outputs
 
 # Tool invocations
-msw.elf msw.map: $(OBJS) $(USER_OBJS) /root/STM32CubeIDE/workspace_1.18.0/msw/STM32F103C6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "msw.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"/root/STM32CubeIDE/workspace_1.18.0/msw/STM32F103C6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="msw.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+msw.elf msw.map: $(OBJS) $(USER_OBJS) /home/tim/STM32CubeIDE/workspace_1.18.0/msw/STM32F103C6TX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "msw.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"/home/tim/STM32CubeIDE/workspace_1.18.0/msw/STM32F103C6TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="msw.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

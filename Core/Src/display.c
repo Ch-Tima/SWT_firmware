@@ -7,6 +7,8 @@ extern SPI_HandleTypeDef hspi1;
 // Буфер экрана 128x64 (по 8 строк на страницу)
 static uint8_t lcd_buffer[8][128];
 
+static const uint8_t FONT_SIZE=8;
+
 char font8x8_basic[128][8] = {
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+0000 (nul)
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+0001
@@ -193,21 +195,29 @@ void LCD_Update(){
 
 void LCD_DrawPoint(uint8_t x, uint8_t y){
 	if (x >= 128 || y >= 64) return;
-	lcd_buffer[y / 8][x] |= (1 << (y % 8));;
+	lcd_buffer[y / 8][x] |= (1 << (y % 8));
 }
 
-LCD_DrawChar(uint8_t x, uint8_t y, char ch){
-
+void LCD_DrawChar(uint8_t x, uint8_t y, char ch){
 	for(uint8_t c = 0; c < 8; c++){
-		for(uint8_t b = 0; b < 8; b++){
-			 if(font8x8_basic[ch][c] >> b & 1){
-				 LCD_DrawPoint(x+b*2, y+c*2);//0|0
-				 LCD_DrawPoint(x+b*2, y+1+c*2);//0|1
-				 LCD_DrawPoint(x+1+b*2, y+c*2);//1|0
-				 LCD_DrawPoint(x+1+b*2, y+1+c*2);//1|1
-			 }
+			for(uint8_t b = 0; b < 8; b++){
+				 if(font8x8_basic[ch][c] >> b & 1){
+					 LCD_DrawPoint(x+b, y+c);
+				 }
+			}
 		}
-	}
+}
 
+void LCD_DrawCharX2(uint8_t x, uint8_t y, char ch){
+	for(uint8_t c = 0; c < 8; c++){
+			for(uint8_t b = 0; b < 8; b++){
+				 if(font8x8_basic[ch][c] >> b & 1){
+					 LCD_DrawPoint(x+b*2, y+c*2);//0|0
+					 LCD_DrawPoint(x+b*2, y+1+c*2);//0|1
+					 LCD_DrawPoint(x+1+b*2, y+c*2);//1|0
+					 LCD_DrawPoint(x+1+b*2, y+1+c*2);//1|1
+				 }
+			}
+		}
 }
 

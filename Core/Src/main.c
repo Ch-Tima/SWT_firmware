@@ -40,8 +40,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
-
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -51,7 +49,6 @@ SPI_HandleTypeDef hspi1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_I2C1_Init(void);
 static void MX_SPI1_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -91,7 +88,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_I2C1_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
   LCD_Init(&hspi1);
@@ -99,7 +95,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
+  HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, GPIO_PIN_SET);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -107,23 +103,21 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 	  LCD_Clear();
-	  for (uint8_t y = 0; y < 64; y++)
+	  for (uint8_t y = 0; y < 64; y++){
 	      for (uint8_t x = 0; x < 128; x++)
 	      {
-	    	  if ((y > 16 && y < 32) && (x > 16 && x < 32))
+	    	  if ((y < 3 || y > 60) || (x < 3+4 || x > 124))//+4 из невидимой зонны
 	    		  LCD_DrawPoint(x, y);
-
-	    	  if ((y > 20 && y < 60) && (x > 45 && x < 86)){
-	    		  if(x % 2 == 0 || y % 2 == 0){
-		    		  LCD_DrawPoint(x, y);
-	    		  }
-	    	  }
-
-
 	      }
-
-	  //LCD_DrawChar(90, 4, 'f');
-	  LCD_DrawChar(100, 4, 'F');
+	  }
+//	  LCD_DrawCharX2(8, 4, 'H');
+//	  LCD_DrawCharX2((8+0)*2+5, 4, 'I');
+//	  LCD_DrawCharX2((8+8)*2+5, 4, '!');
+//	  LCD_DrawCharX2((16+8)*2+5, 4, '>');
+//
+//	  LCD_DrawChar(75, 4, 'f');
+	  LCD_DrawChar(90, 4, 'F');
+//	  LCD_DrawCharX2(110, 4, 'F');
 	  LCD_Update();
 
   }
@@ -164,40 +158,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
