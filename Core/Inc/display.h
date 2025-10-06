@@ -22,4 +22,6 @@ void LCD_Clear(void);
 void LCD_Update(void);
 void LCD_DrawPoint(uint8_t x, uint8_t y);
 void LCD_DrawChar(uint8_t x, uint8_t y, char ch);
+void LCD_DrawCharX2(uint8_t x, uint8_t y, char ch);
+void LCD_DrawText(uint8_t x, uint8_t y, const char *text);
 #endif /* INC_DISPLAY_H_ */

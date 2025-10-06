@@ -5,3 +5,4 @@
 ../Core/Src/display.c:196:6:LCD_DrawPoint	3
 ../Core/Src/display.c:201:6:LCD_DrawChar	4
 ../Core/Src/display.c:211:6:LCD_DrawCharX2	4
+../Core/Src/display.c:224:6:LCD_DrawText	2

@@ -221,3 +221,10 @@ void LCD_DrawCharX2(uint8_t x, uint8_t y, char ch){
 		}
 }
 
+void LCD_DrawText(uint8_t x, uint8_t y, const char *text){
+	while(*text){
+		LCD_DrawChar(x, y, *text++);
+		x+=7;
+	}
+}
+

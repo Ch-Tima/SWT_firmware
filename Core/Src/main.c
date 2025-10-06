@@ -95,7 +95,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 0);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -110,13 +110,15 @@ int main(void)
 	    		  LCD_DrawPoint(x, y);
 	      }
 	  }
-//	  LCD_DrawCharX2(8, 4, 'H');
+	  LCD_DrawCharX2(8, 8, 'H');
 //	  LCD_DrawCharX2((8+0)*2+5, 4, 'I');
 //	  LCD_DrawCharX2((8+8)*2+5, 4, '!');
 //	  LCD_DrawCharX2((16+8)*2+5, 4, '>');
 //
 //	  LCD_DrawChar(75, 4, 'f');
-	  LCD_DrawChar(90, 4, 'F');
+	  LCD_DrawChar(90, 8, 'F');
+
+	  LCD_DrawText(8, 32, "[G]t.$x't|1;2:3");
 //	  LCD_DrawCharX2(110, 4, 'F');
 	  LCD_Update();
 
@@ -256,7 +258,7 @@ void Error_Handler(void)
   while (1)
   {
 	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
-	  HAL_Delay(250);
+	  HAL_Delay(1500);
   }
   /* USER CODE END Error_Handler_Debug */
 }
