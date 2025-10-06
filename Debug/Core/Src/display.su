@@ -1,0 +1,6 @@
+../Core/Src/display.c:141:13:LCD_Send	16	static
+../Core/Src/display.c:155:6:LCD_Init	8	static
+../Core/Src/display.c:176:6:LCD_Clear	16	static
+../Core/Src/display.c:182:6:LCD_Update	16	static
+../Core/Src/display.c:194:6:LCD_DrawPoint	16	static
+../Core/Src/display.c:199:1:LCD_DrawChar	24	static
