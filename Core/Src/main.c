@@ -40,6 +40,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+RTC_HandleTypeDef hrtc;
+
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
@@ -50,6 +52,7 @@ SPI_HandleTypeDef hspi1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_RTC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -89,8 +92,9 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_SPI1_Init();
+  MX_RTC_Init();
   /* USER CODE BEGIN 2 */
-  LCD_Init(&hspi1);
+  LCD_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,16 +114,15 @@ int main(void)
 	    		  LCD_DrawPoint(x, y);
 	      }
 	  }
-	  LCD_DrawCharX2(8, 8, 'H');
-//	  LCD_DrawCharX2((8+0)*2+5, 4, 'I');
-//	  LCD_DrawCharX2((8+8)*2+5, 4, '!');
-//	  LCD_DrawCharX2((16+8)*2+5, 4, '>');
-//
-//	  LCD_DrawChar(75, 4, 'f');
-	  LCD_DrawChar(90, 8, 'F');
+	  //LCD_DrawCharX2(8, 8, 'H');
+	  //LCD_DrawChar(90, 8, 'F');
 
 	  LCD_DrawText(8, 32, "[G]t.$x't|1;2:3");
-//	  LCD_DrawCharX2(110, 4, 'F');
+
+	  LCD_DrawText(10, 8, "19:14|06/10/2025");
+
+	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
+	  HAL_Delay(500);
 	  LCD_Update();
 
   }
@@ -134,11 +137,13 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
@@ -153,13 +158,77 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
+  * @brief RTC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_RTC_Init(void)
+{
+
+  /* USER CODE BEGIN RTC_Init 0 */
+
+  /* USER CODE END RTC_Init 0 */
+
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef DateToUpdate = {0};
+
+  /* USER CODE BEGIN RTC_Init 1 */
+
+  /* USER CODE END RTC_Init 1 */
+
+  /** Initialize RTC Only
+  */
+  hrtc.Instance = RTC;
+  hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
+  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_NONE;
+  if (HAL_RTC_Init(&hrtc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN Check_RTC_BKUP */
+
+  /* USER CODE END Check_RTC_BKUP */
+
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0x19;
+  sTime.Minutes = 0x10;
+  sTime.Seconds = 0x5;
+
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
+  DateToUpdate.Month = RTC_MONTH_OCTOBER;
+  DateToUpdate.Date = 0x6;
+  DateToUpdate.Year = 0x0;
+
+  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN RTC_Init 2 */
+
+  /* USER CODE END RTC_Init 2 */
+
 }
 
 /**
@@ -257,8 +326,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
-	  HAL_Delay(1500);
+	  HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 1);
   }
   /* USER CODE END Error_Handler_Debug */
 }
