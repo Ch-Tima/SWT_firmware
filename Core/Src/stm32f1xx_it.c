@@ -57,7 +57,7 @@
 /* External variables --------------------------------------------------------*/
 extern RTC_HandleTypeDef hrtc;
 /* USER CODE BEGIN EV */
-
+extern volatile uint8_t rtc_tick;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -187,7 +187,7 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
+  HAL_SYSTICK_IRQHandler();
   /* USER CODE END SysTick_IRQn 1 */
 }
 
@@ -204,7 +204,12 @@ void SysTick_Handler(void)
 void RTC_IRQHandler(void)
 {
   /* USER CODE BEGIN RTC_IRQn 0 */
-
+	if (RTC->CRL & RTC_CRL_SECF)
+		{
+	     RTC->CRL &= ~RTC_CRL_SECF;    //сбросить флаг (обязательно!!!)
+	     HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
+	     rtc_tick++;
+	  }
   /* USER CODE END RTC_IRQn 0 */
   HAL_RTCEx_RTCIRQHandler(&hrtc);
   /* USER CODE BEGIN RTC_IRQn 1 */
@@ -213,5 +218,4 @@ void RTC_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-
 /* USER CODE END 1 */

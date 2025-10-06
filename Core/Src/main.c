@@ -45,7 +45,7 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-
+uint8_t rtc_tick;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -99,7 +99,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 0);
+  //HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 1);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -117,12 +117,16 @@ int main(void)
 	  //LCD_DrawCharX2(8, 8, 'H');
 	  //LCD_DrawChar(90, 8, 'F');
 
-	  LCD_DrawText(8, 32, "[G]t.$x't|1;2:3");
+	  //LCD_DrawText(8, 32, "[G]t.$x't|1;2:3");
 
 	  LCD_DrawText(10, 8, "19:14|06/10/2025");
 
-	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
-	  HAL_Delay(500);
+	  if (rtc_tick) {
+	      rtc_tick = 0;
+	      LCD_DrawText(8, 32, "Tick!");
+	  }
+
+	  HAL_Delay(256);
 	  LCD_Update();
 
   }
@@ -208,17 +212,17 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  sTime.Hours = 0x19;
-  sTime.Minutes = 0x10;
-  sTime.Seconds = 0x5;
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
 
   if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
   {
     Error_Handler();
   }
   DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
-  DateToUpdate.Month = RTC_MONTH_OCTOBER;
-  DateToUpdate.Date = 0x6;
+  DateToUpdate.Month = RTC_MONTH_JANUARY;
+  DateToUpdate.Date = 0x1;
   DateToUpdate.Year = 0x0;
 
   if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
@@ -226,7 +230,11 @@ static void MX_RTC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
+  HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(RTC_IRQn);
 
+  // Разрешаем прерывание секунды
+  __HAL_RTC_SECOND_ENABLE_IT(&hrtc, RTC_IT_SEC);
   /* USER CODE END RTC_Init 2 */
 
 }
@@ -326,7 +334,7 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-	  HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 1);
+	  //HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 0);
   }
   /* USER CODE END Error_Handler_Debug */
 }
