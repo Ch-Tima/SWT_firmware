@@ -41,6 +41,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
+RTC_TimeTypeDef clkTime;
 
 SPI_HandleTypeDef hspi1;
 
@@ -59,6 +60,19 @@ static void MX_RTC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void Get_Time_Now(char *timeStr){
+	HAL_RTC_GetTime(&hrtc, &clkTime, RTC_FORMAT_BIN);
+	timeStr[0] = '0' + clkTime.Hours / 10;
+	timeStr[1] = '0' + clkTime.Hours % 10;
+	timeStr[2] = ':';
+	timeStr[3] = '0' + clkTime.Minutes / 10;
+	timeStr[4] = '0' + clkTime.Minutes % 10;
+	timeStr[5] = ':';
+	timeStr[6] = '0' + clkTime.Seconds / 10;
+	timeStr[7] = '0' + clkTime.Seconds % 10;
+	timeStr[8] = '\0';
+}
 
 /* USER CODE END 0 */
 
@@ -86,7 +100,8 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  __HAL_RCC_PWR_CLK_ENABLE();
+  HAL_PWR_EnableBkUpAccess();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -99,31 +114,21 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  //HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 1);
+  char timeStr[9];
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
 	  LCD_Clear();
-	  for (uint8_t y = 0; y < 64; y++){
-	      for (uint8_t x = 0; x < 128; x++)
-	      {
-	    	  if ((y < 3 || y > 60) || (x < 3+4 || x > 124))//+4 из невидимой зонны
-	    		  LCD_DrawPoint(x, y);
-	      }
-	  }
-	  //LCD_DrawCharX2(8, 8, 'H');
-	  //LCD_DrawChar(90, 8, 'F');
 
-	  //LCD_DrawText(8, 32, "[G]t.$x't|1;2:3");
+	  Get_Time_Now(timeStr);
 
-	  LCD_DrawText(10, 8, "19:14|06/10/2025");
+	  LCD_DrawText(8, 8, timeStr, 1);
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
-	      LCD_DrawText(8, 32, "Tick!");
+	      LCD_DrawText(8, 32, "Tick!", 0);
 	  }
 
 	  HAL_Delay(256);
@@ -200,7 +205,7 @@ static void MX_RTC_Init(void)
   */
   hrtc.Instance = RTC;
   hrtc.Init.AsynchPrediv = RTC_AUTO_1_SECOND;
-  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_NONE;
+  hrtc.Init.OutPut = RTC_OUTPUTSOURCE_ALARM;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
   {
     Error_Handler();
@@ -216,24 +221,22 @@ static void MX_RTC_Init(void)
   sTime.Minutes = 0x0;
   sTime.Seconds = 0x0;
 
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
   DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
   DateToUpdate.Month = RTC_MONTH_JANUARY;
   DateToUpdate.Date = 0x1;
   DateToUpdate.Year = 0x0;
 
-  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
+//  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+//  {
+//    Error_Handler();
+//  }
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(RTC_IRQn);
-
-  // Разрешаем прерывание секунды
   __HAL_RTC_SECOND_ENABLE_IT(&hrtc, RTC_IT_SEC);
   /* USER CODE END RTC_Init 2 */
 
@@ -334,7 +337,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-	  //HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, 0);
+	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
+	  HAL_Delay(250);
   }
   /* USER CODE END Error_Handler_Debug */
 }
