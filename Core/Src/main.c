@@ -75,17 +75,76 @@ void Get_Time_Now(char *timeStr){
 	timeStr[8] = '\0';
 }
 
-void Get_Date_Now(char *dateStr){
+void Get_Date_Now(char *dateStr, uint8_t format){
 	HAL_RTC_GetDate(&hrtc, &clkDate, RTC_FORMAT_BIN);
-	dateStr[0] = '0' + clkDate.Date / 10;
-	dateStr[1] = '0' + clkDate.Date % 10;
-	dateStr[2] = '.';
-	dateStr[3] = '0' + clkDate.Month / 10;
-	dateStr[4] = '0' + clkDate.Month % 10;
-	dateStr[5] = '.';
-	dateStr[6] = '0' + clkDate.Year / 10;
-	dateStr[7] = '0' + clkDate.Year % 10;
-	dateStr[8] = '\0';
+
+
+	uint8_t pos = 0;
+
+	if(format >> 0 & 1){
+		switch(clkDate.WeekDay){
+		case 0:
+		  dateStr[pos++] = 'M';
+		  dateStr[pos++] = 'o';
+		  dateStr[pos++] = 'n';
+		break;
+		case 1:
+		  dateStr[pos++] = 'T';
+		  dateStr[pos++] = 'u';
+		  dateStr[pos++] = 'e';
+		break;
+		case 2:
+		  dateStr[pos++] = 'W';
+		  dateStr[pos++] = 'e';
+		  dateStr[pos++] = 'd';
+		break;
+		case 3:
+		  dateStr[pos++] = 'T';
+		  dateStr[pos++] = 'h';
+		  dateStr[pos++] = 'u';
+		break;
+		case 4:
+		  dateStr[pos++] = 'F';
+		  dateStr[pos++] = 'r';
+		  dateStr[pos++] = 'i';
+		break;
+		case 5:
+		  dateStr[pos++] = 'S';
+		  dateStr[pos++] = 'a';
+		  dateStr[pos++] = 't';
+		break;
+		case 6:
+		  dateStr[pos++] = 'S';
+		  dateStr[pos++] = 'u';
+		  dateStr[pos++] = 'n';
+		break;
+		default:
+			dateStr[pos++] = '?';
+		}
+
+		dateStr[pos++] = ' ';
+	}
+
+	if(format >> 1 & 1){
+		dateStr[pos++] = '0' + clkDate.Date / 10;
+		dateStr[pos++] = '0' + clkDate.Date % 10;
+		dateStr[pos++] = '.';
+	}
+
+	if(format >> 2 & 1){
+		dateStr[pos++] = '0' + clkDate.Month / 10;
+		dateStr[pos++] = '0' + clkDate.Month % 10;
+		dateStr[pos++] = '.';
+	}
+
+	if(format >> 3 & 1){
+		dateStr[pos++] = '0' + clkDate.Year / 10;
+		dateStr[pos++] = '0' + clkDate.Year % 10;
+		dateStr[pos++] = '.';
+	}
+
+
+	dateStr[pos-1] = '\0';
 }
 
 /* USER CODE END 0 */
@@ -128,10 +187,11 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   char timeStr[9];
-  char dateStr[9];
+  char dateStr[13] = {0}; //WWW DD/MM/YY
+  uint8_t dataFormat = 0b1111;//YYMMDDWW
 
   Get_Time_Now(timeStr);
-  Get_Date_Now(dateStr);
+  Get_Date_Now(dateStr, dataFormat);
 
   while (1)
   {
@@ -140,15 +200,15 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  LCD_Clear();
 
-	  LCD_DrawText(8, 8, timeStr, 1);
-	  LCD_DrawText(8, 32, dateStr, 0);
+	  LCD_DrawText(8, 16, timeStr, 1);
+	  LCD_DrawText(24, 48, dateStr, 0);
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
 	      Get_Time_Now(timeStr);
 		  //HAL_RTC_GetDate(&hrtc, &clkTime, RTC_FORMAT_BCD);
-		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00 || clkTime.Seconds == 0x01)){
-			  Get_Date_Now(dateStr);
+		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
+			  Get_Date_Now(dateStr, dataFormat);
 		  }
 	  }
 
@@ -244,9 +304,9 @@ static void MX_RTC_Init(void)
 
   if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F)
   {
-	  	sTime.Hours = 0x12;
-	    sTime.Minutes = 0x58;
-	    sTime.Seconds = 0x55;
+	  	sTime.Hours = 0x15;
+	    sTime.Minutes = 0x18;
+	    sTime.Seconds = 0x40;
 
 	    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
 	    {
