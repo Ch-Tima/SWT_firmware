@@ -42,6 +42,7 @@
 /* Private variables ---------------------------------------------------------*/
 RTC_HandleTypeDef hrtc;
 RTC_TimeTypeDef clkTime;
+RTC_DateTypeDef clkDate;
 
 SPI_HandleTypeDef hspi1;
 
@@ -74,6 +75,19 @@ void Get_Time_Now(char *timeStr){
 	timeStr[8] = '\0';
 }
 
+void Get_Date_Now(char *dateStr){
+	HAL_RTC_GetDate(&hrtc, &clkDate, RTC_FORMAT_BIN);
+	dateStr[0] = '0' + clkDate.Date / 10;
+	dateStr[1] = '0' + clkDate.Date % 10;
+	dateStr[2] = '.';
+	dateStr[3] = '0' + clkDate.Month / 10;
+	dateStr[4] = '0' + clkDate.Month % 10;
+	dateStr[5] = '.';
+	dateStr[6] = '0' + clkDate.Year / 10;
+	dateStr[7] = '0' + clkDate.Year % 10;
+	dateStr[8] = '\0';
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -100,8 +114,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  HAL_PWR_EnableBkUpAccess();
+
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -115,6 +128,11 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   char timeStr[9];
+  char dateStr[9];
+
+  Get_Time_Now(timeStr);
+  Get_Date_Now(dateStr);
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -122,13 +140,16 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  LCD_Clear();
 
-	  Get_Time_Now(timeStr);
-
 	  LCD_DrawText(8, 8, timeStr, 1);
+	  LCD_DrawText(8, 32, dateStr, 0);
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
-	      LCD_DrawText(8, 32, "Tick!", 0);
+	      Get_Time_Now(timeStr);
+		  //HAL_RTC_GetDate(&hrtc, &clkTime, RTC_FORMAT_BCD);
+		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00 || clkTime.Seconds == 0x01)){
+			  Get_Date_Now(dateStr);
+		  }
 	  }
 
 	  HAL_Delay(256);
@@ -144,6 +165,9 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
+	__HAL_RCC_PWR_CLK_ENABLE(); // PWR
+	HAL_PWR_EnableBkUpAccess();// backup-домену
+
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
@@ -217,23 +241,41 @@ static void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  sTime.Hours = 0x0;
-  sTime.Minutes = 0x0;
-  sTime.Seconds = 0x0;
 
-//  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
-  DateToUpdate.WeekDay = RTC_WEEKDAY_MONDAY;
-  DateToUpdate.Month = RTC_MONTH_JANUARY;
-  DateToUpdate.Date = 0x1;
-  DateToUpdate.Year = 0x0;
+  if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F)
+  {
+	  	sTime.Hours = 0x12;
+	    sTime.Minutes = 0x58;
+	    sTime.Seconds = 0x55;
 
-//  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-//  {
-//    Error_Handler();
-//  }
+	    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+	    {
+	      Error_Handler();
+	    }
+	    DateToUpdate.WeekDay = RTC_WEEKDAY_SATURDAY;
+	    DateToUpdate.Month = RTC_MONTH_OCTOBER;
+	    DateToUpdate.Date = 0x11;
+	    DateToUpdate.Year = 0x25;
+
+	    if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+	    {
+	      Error_Handler();
+	    }
+
+	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F);//set flag
+	    //save DATE wdDDMMYY
+	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR2, DateToUpdate.WeekDay);
+	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR3, DateToUpdate.Date);
+	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR4, DateToUpdate.Month);
+	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR5, DateToUpdate.Year);
+  }else{
+	    DateToUpdate.WeekDay = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR2);
+	    DateToUpdate.Date    = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR3);
+	    DateToUpdate.Month   = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR4);
+	    DateToUpdate.Year    = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR5);
+	    HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD);
+  }
+
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(RTC_IRQn);
