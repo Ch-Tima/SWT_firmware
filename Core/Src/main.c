@@ -48,6 +48,7 @@ SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
 uint8_t rtc_tick;
+const char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,48 +81,11 @@ void Get_Date_Now(char *dateStr, uint8_t format){
 
 
 	uint8_t pos = 0;
-
 	if(format >> 0 & 1){
-		switch(clkDate.WeekDay){
-		case 0:
-		  dateStr[pos++] = 'M';
-		  dateStr[pos++] = 'o';
-		  dateStr[pos++] = 'n';
-		break;
-		case 1:
-		  dateStr[pos++] = 'T';
-		  dateStr[pos++] = 'u';
-		  dateStr[pos++] = 'e';
-		break;
-		case 2:
-		  dateStr[pos++] = 'W';
-		  dateStr[pos++] = 'e';
-		  dateStr[pos++] = 'd';
-		break;
-		case 3:
-		  dateStr[pos++] = 'T';
-		  dateStr[pos++] = 'h';
-		  dateStr[pos++] = 'u';
-		break;
-		case 4:
-		  dateStr[pos++] = 'F';
-		  dateStr[pos++] = 'r';
-		  dateStr[pos++] = 'i';
-		break;
-		case 5:
-		  dateStr[pos++] = 'S';
-		  dateStr[pos++] = 'a';
-		  dateStr[pos++] = 't';
-		break;
-		case 6:
-		  dateStr[pos++] = 'S';
-		  dateStr[pos++] = 'u';
-		  dateStr[pos++] = 'n';
-		break;
-		default:
-			dateStr[pos++] = '?';
-		}
-
+		const char *day = weekDays[clkDate.WeekDay];
+        for(uint8_t i = 0; i < 3; i++){
+        	dateStr[pos++] = day[i];
+        }
 		dateStr[pos++] = ' ';
 	}
 
