@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "display.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,14 +41,16 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+ADC_HandleTypeDef hadc1;
+
 RTC_HandleTypeDef hrtc;
-RTC_TimeTypeDef clkTime;
-RTC_DateTypeDef clkDate;
 
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
 uint8_t rtc_tick;
+RTC_TimeTypeDef clkTime;
+RTC_DateTypeDef clkDate;
 const char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
 /* USER CODE END PV */
 
@@ -56,6 +59,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
+static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -130,7 +134,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  __HAL_RCC_PWR_CLK_ENABLE(); // PWR
+  HAL_PWR_EnableBkUpAccess();// backup-домену
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -144,7 +149,9 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_RTC_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_ADCEx_Calibration_Start(&hadc1);//калебровка
   LCD_Init();
   /* USER CODE END 2 */
 
@@ -153,6 +160,8 @@ int main(void)
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
   uint8_t dataFormat = 0b1111;//YYMMDDWW
+  uint32_t tp = 0;
+  char str_tp[11];
 
   Get_Time_Now(timeStr);
   Get_Date_Now(dateStr, dataFormat);
@@ -165,7 +174,7 @@ int main(void)
 	  LCD_Clear();
 
 	  LCD_DrawText(8, 16, timeStr, 1);
-	  LCD_DrawText(24, 48, dateStr, 0);
+	  LCD_DrawText(16, 36, dateStr, 0);
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
@@ -175,6 +184,14 @@ int main(void)
 			  Get_Date_Now(dateStr, dataFormat);
 		  }
 	  }
+
+	  HAL_ADC_Start(&hadc1);
+	  HAL_ADC_PollForConversion(&hadc1, 10);//10ms
+	  tp = HAL_ADC_GetValue(&hadc1);
+
+	  snprintf(str_tp, 11, "%lu", tp);
+	  LCD_DrawText(16, 48, str_tp, 0);
+
 
 	  HAL_Delay(256);
 	  LCD_Update();
@@ -189,9 +206,6 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-	__HAL_RCC_PWR_CLK_ENABLE(); // PWR
-	HAL_PWR_EnableBkUpAccess();// backup-домену
-
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
@@ -222,12 +236,60 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_ADC;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV2;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC1_Init(void)
+{
+
+  /* USER CODE BEGIN ADC1_Init 0 */
+
+  /* USER CODE END ADC1_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC1_Init 1 */
+
+  /* USER CODE END ADC1_Init 1 */
+
+  /** Common config
+  */
+  hadc1.Instance = ADC1;
+  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.DiscontinuousConvMode = DISABLE;
+  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc1.Init.NbrOfConversion = 1;
+  if (HAL_ADC_Init(&hadc1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC1_Init 2 */
+
+  /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
@@ -260,45 +322,40 @@ static void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
-
-  /* USER CODE END Check_RTC_BKUP */
-
-  /** Initialize RTC and set the Time and Date
-  */
-
   if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F)
-  {
-	  	sTime.Hours = 0x15;
-	    sTime.Minutes = 0x18;
-	    sTime.Seconds = 0x40;
+    {
+  	  	sTime.Hours = 0x15;
+  	    sTime.Minutes = 0x18;
+  	    sTime.Seconds = 0x40;
 
-	    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-	    {
-	      Error_Handler();
-	    }
-	    DateToUpdate.WeekDay = RTC_WEEKDAY_SATURDAY;
-	    DateToUpdate.Month = RTC_MONTH_OCTOBER;
-	    DateToUpdate.Date = 0x11;
-	    DateToUpdate.Year = 0x25;
+  	    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  	    {
+  	      Error_Handler();
+  	    }
+  	    DateToUpdate.WeekDay = RTC_WEEKDAY_SATURDAY;
+  	    DateToUpdate.Month = RTC_MONTH_OCTOBER;
+  	    DateToUpdate.Date = 0x11;
+  	    DateToUpdate.Year = 0x25;
 
-	    if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-	    {
-	      Error_Handler();
-	    }
+  	    if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  	    {
+  	      Error_Handler();
+  	    }
 
-	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F);//set flag
-	    //save DATE wdDDMMYY
-	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR2, DateToUpdate.WeekDay);
-	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR3, DateToUpdate.Date);
-	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR4, DateToUpdate.Month);
-	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR5, DateToUpdate.Year);
-  }else{
-	    DateToUpdate.WeekDay = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR2);
-	    DateToUpdate.Date    = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR3);
-	    DateToUpdate.Month   = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR4);
-	    DateToUpdate.Year    = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR5);
-	    HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD);
-  }
+  	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR1, 0x32F);//set flag
+  	    //save DATE wdDDMMYY
+  	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR2, DateToUpdate.WeekDay);
+  	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR3, DateToUpdate.Date);
+  	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR4, DateToUpdate.Month);
+  	    HAL_RTCEx_BKUPWrite(&hrtc, RTC_BKP_DR5, DateToUpdate.Year);
+    }else{
+  	    DateToUpdate.WeekDay = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR2);
+  	    DateToUpdate.Date    = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR3);
+  	    DateToUpdate.Month   = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR4);
+  	    DateToUpdate.Year    = HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR5);
+  	    HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD);
+    }
+  /* USER CODE END Check_RTC_BKUP */
 
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
