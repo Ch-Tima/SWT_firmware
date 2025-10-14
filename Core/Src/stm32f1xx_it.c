@@ -55,9 +55,12 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
+extern ADC_HandleTypeDef hadc1;
 extern RTC_HandleTypeDef hrtc;
 /* USER CODE BEGIN EV */
 extern volatile uint8_t rtc_tick;
+extern volatile uint8_t adc1_tick;
+extern volatile uint32_t adc1_value_thermistor;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -215,6 +218,24 @@ void RTC_IRQHandler(void)
   /* USER CODE BEGIN RTC_IRQn 1 */
 
   /* USER CODE END RTC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles ADC1 and ADC2 global interrupts.
+  */
+void ADC1_2_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC1_2_IRQn 0 */
+	if(hadc1.Instance == ADC1){
+		adc1_value_thermistor = HAL_ADC_GetValue(&hadc1);
+		HAL_ADC_Stop(&hadc1);
+		adc1_tick++;
+	}
+  /* USER CODE END ADC1_2_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
+  /* USER CODE BEGIN ADC1_2_IRQn 1 */
+
+  /* USER CODE END ADC1_2_IRQn 1 */
 }
 
 /**

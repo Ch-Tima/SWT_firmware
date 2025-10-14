@@ -48,7 +48,9 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-uint8_t rtc_tick;
+uint8_t rtc_tick = 0x0;
+uint8_t adc1_tick = 0x0;
+uint32_t adc1_value_thermistor = 0;
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
 const char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
@@ -160,21 +162,17 @@ int main(void)
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
   uint8_t dataFormat = 0b1111;//YYMMDDWW
-  uint32_t tp = 0;
   char str_tp[11];
 
   Get_Time_Now(timeStr);
   Get_Date_Now(dateStr, dataFormat);
-
+  HAL_ADC_Start_IT(&hadc1);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 	  LCD_Clear();
-
-	  LCD_DrawText(8, 16, timeStr, 1);
-	  LCD_DrawText(16, 36, dateStr, 0);
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
@@ -183,13 +181,16 @@ int main(void)
 		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
 			  Get_Date_Now(dateStr, dataFormat);
 		  }
+		  if(adc1_tick != 0){
+			  HAL_ADC_Start_IT(&hadc1);
+		  }
 	  }
 
-	  HAL_ADC_Start(&hadc1);
-	  HAL_ADC_PollForConversion(&hadc1, 10);//10ms
-	  tp = HAL_ADC_GetValue(&hadc1);
 
-	  snprintf(str_tp, 11, "%lu", tp);
+	  LCD_DrawText(8, 16, timeStr, 1);
+	  LCD_DrawText(16, 36, dateStr, 0);
+
+	  snprintf(str_tp, 11, "%lu", adc1_value_thermistor);
 	  LCD_DrawText(16, 48, str_tp, 0);
 
 
@@ -357,6 +358,25 @@ static void MX_RTC_Init(void)
     }
   /* USER CODE END Check_RTC_BKUP */
 
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0x0;
+  sTime.Minutes = 0x0;
+  sTime.Seconds = 0x0;
+
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  DateToUpdate.WeekDay = RTC_WEEKDAY_SUNDAY;
+  DateToUpdate.Month = RTC_MONTH_OCTOBER;
+  DateToUpdate.Date = 0x12;
+  DateToUpdate.Year = 0x25;
+
+  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(RTC_IRQn);
