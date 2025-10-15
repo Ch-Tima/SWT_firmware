@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "display.h"
 #include <stdio.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,6 +52,12 @@ SPI_HandleTypeDef hspi1;
 uint8_t rtc_tick = 0x0;
 uint8_t adc1_tick = 0x0;
 uint32_t adc1_value_thermistor = 0;
+float tmp = 0;
+#define A 0.0008397788656f
+#define B 0.0002006238973f
+#define C 0.0000001356660f
+#define NTC_UP_R 10000.0f
+
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
 const char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
@@ -162,7 +169,7 @@ int main(void)
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
   uint8_t dataFormat = 0b1111;//YYMMDDWW
-  char str_tp[11];
+  char str_tp[32];
 
   Get_Time_Now(timeStr);
   Get_Date_Now(dateStr, dataFormat);
@@ -181,8 +188,21 @@ int main(void)
 		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
 			  Get_Date_Now(dateStr, dataFormat);
 		  }
-		  if(adc1_tick != 0){
-			  HAL_ADC_Start_IT(&hadc1);
+		  if(adc1_tick){
+			  adc1_tick = 0;
+
+			      if (adc1_value_thermistor > 0 && adc1_value_thermistor < 4095)
+			      {
+			    	  float Ntc_R = ((NTC_UP_R)/((4095.0/adc1_value_thermistor)-1));
+			    	  float Ntc_log = log(Ntc_R);
+			    	  tmp = (1.0f/(A+B*Ntc_log + C*Ntc_log*Ntc_log*Ntc_log))-273.15f;
+			      }
+			      else
+			      {
+			          tmp = NAN;
+			      }
+
+			      HAL_ADC_Start_IT(&hadc1);
 		  }
 	  }
 
@@ -190,7 +210,9 @@ int main(void)
 	  LCD_DrawText(8, 16, timeStr, 1);
 	  LCD_DrawText(16, 36, dateStr, 0);
 
-	  snprintf(str_tp, 11, "%lu", adc1_value_thermistor);
+	  int whole = (int)tmp;
+	  int frac = (int)((tmp - whole) * 10);
+	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%d", whole, abs(frac));
 	  LCD_DrawText(16, 48, str_tp, 0);
 
 
@@ -282,7 +304,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();

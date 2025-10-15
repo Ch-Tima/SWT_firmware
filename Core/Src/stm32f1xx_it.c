@@ -229,7 +229,7 @@ void ADC1_2_IRQHandler(void)
 	if(hadc1.Instance == ADC1){
 		adc1_value_thermistor = HAL_ADC_GetValue(&hadc1);
 		HAL_ADC_Stop(&hadc1);
-		adc1_tick++;
+		adc1_tick=1;
 	}
   /* USER CODE END ADC1_2_IRQn 0 */
   HAL_ADC_IRQHandler(&hadc1);
