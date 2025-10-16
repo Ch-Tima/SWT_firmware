@@ -221,10 +221,16 @@ void LCD_DrawCharX2(uint8_t x, uint8_t y, char ch){
 		}
 }
 
-void LCD_DrawText(uint8_t x, uint8_t y, const char *text){
+void LCD_DrawText(uint8_t x, uint8_t y, const char *text, uint8_t isScale){
 	while(*text){
-		LCD_DrawChar(x, y, *text++);
-		x+=7;
+		if(isScale){
+			LCD_DrawCharX2(x, y, *text++);
+			x+=FONT_SIZE*2-1;
+		}else{
+			LCD_DrawChar(x, y, *text++);
+			x+=FONT_SIZE-1;
+		}
+
 	}
 }
 
