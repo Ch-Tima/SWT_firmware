@@ -344,4 +344,3 @@ g_pfnVectors:
 
   .weak USBWakeUp_IRQHandler
   .thumb_set USBWakeUp_IRQHandler,Default_Handler
-
