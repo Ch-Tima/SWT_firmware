@@ -19,4 +19,6 @@
 
 float Thermistor_CalcTempC(uint16_t adcValue);
 
+void Thermistor_strCalcTempC(char *buf, uint16_t adcValu);
+
 #endif /* INC_THERMISTOR_H_ */

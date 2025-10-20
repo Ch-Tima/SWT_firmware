@@ -54,7 +54,6 @@ SPI_HandleTypeDef hspi1;
 uint8_t rtc_tick = 0x0;
 uint8_t adc1_tick = 0x0;
 uint16_t adc1_value_thermistor = 0;
-float tempC = 0;
 
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
@@ -119,7 +118,7 @@ int main(void)
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
   uint8_t dataFormat = 0b1111;//YYMMDDWW
-  char str_tp[32];
+  char tempC[16];
 
   Get_Time_Now(timeStr, &clkTime);
   Get_Date_Now(dateStr, dataFormat, &clkDate);
@@ -139,7 +138,7 @@ int main(void)
 		  }
 		  if(adc1_tick){
 			  adc1_tick = 0;
-			  tempC = Thermistor_CalcTempC(adc1_value_thermistor);
+			  Thermistor_strCalcTempC(tempC, adc1_value_thermistor);
 			  HAL_ADC_Start_IT(&hadc1);
 		  }
 	  }
@@ -148,10 +147,8 @@ int main(void)
 	  LCD_DrawText(4, 16, timeStr, 1);
 	  LCD_DrawText(16, 36, dateStr, 0);
 
-	  int whole = (int)tempC;
-	  int frac = (int)((tempC - whole) * 10);
-	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%dC`", whole, abs(frac));
-	  LCD_DrawText(16, 48, str_tp, 0);
+
+	  LCD_DrawText(16, 48, tempC, 0);
 	  LCD_Update();
 
   }
