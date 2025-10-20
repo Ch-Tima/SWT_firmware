@@ -60,7 +60,7 @@ extern RTC_HandleTypeDef hrtc;
 /* USER CODE BEGIN EV */
 extern volatile uint8_t rtc_tick;
 extern volatile uint8_t adc1_tick;
-extern volatile uint32_t adc1_value_thermistor;
+extern volatile uint16_t adc1_value_thermistor;
 /* USER CODE END EV */
 
 /******************************************************************************/

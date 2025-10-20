@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "display.h"
 #include "RTCManager.h"
+#include "Thermistor.h"
 #include <stdio.h>
 #include <math.h>
 /* USER CODE END Includes */
@@ -52,13 +53,8 @@ SPI_HandleTypeDef hspi1;
 /* USER CODE BEGIN PV */
 uint8_t rtc_tick = 0x0;
 uint8_t adc1_tick = 0x0;
-uint32_t adc1_value_thermistor = 0;
-float tmp = 0;
-#define A 0.0008397788656f
-#define B 0.0002006238973f
-#define C 0.0000001356660f
-#define R_FIXED 10980.0f
-#define ADC_MAX 4095.0f
+uint16_t adc1_value_thermistor = 0;
+float tempC = 0;
 
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
@@ -143,19 +139,8 @@ int main(void)
 		  }
 		  if(adc1_tick){
 			  adc1_tick = 0;
-
-			  if (adc1_value_thermistor > 0 && adc1_value_thermistor < 4095)
-			  {
-			      float adc = (float)adc1_value_thermistor;
-			      float Ntc_R = R_FIXED * (adc / (ADC_MAX - adc));  // <-- исправленная формула
-			      float Ntc_log = logf(Ntc_R);
-			      tmp = (1.0f / (A + B*Ntc_log + C*Ntc_log*Ntc_log*Ntc_log)) - 273.15f;
-			  }
-			  else
-			  {
-			      tmp = NAN;
-			  }
-			      HAL_ADC_Start_IT(&hadc1);
+			  tempC = Thermistor_CalcTempC(adc1_value_thermistor);
+			  HAL_ADC_Start_IT(&hadc1);
 		  }
 	  }
 
@@ -163,9 +148,9 @@ int main(void)
 	  LCD_DrawText(4, 16, timeStr, 1);
 	  LCD_DrawText(16, 36, dateStr, 0);
 
-	  int whole = (int)tmp;
-	  int frac = (int)((tmp - whole) * 10);
-	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%d", whole, abs(frac));
+	  int whole = (int)tempC;
+	  int frac = (int)((tempC - whole) * 10);
+	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%dC`", whole, abs(frac));
 	  LCD_DrawText(16, 48, str_tp, 0);
 	  LCD_Update();
 
