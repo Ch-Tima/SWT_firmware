@@ -56,7 +56,8 @@ float tmp = 0;
 #define A 0.0008397788656f
 #define B 0.0002006238973f
 #define C 0.0000001356660f
-#define NTC_UP_R 10000.0f
+#define R_FIXED 10980.0f
+#define ADC_MAX 4095.0f
 
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
@@ -181,44 +182,38 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  LCD_Clear();
 
-//	  if (rtc_tick) {
-//	      rtc_tick = 0;
-//	      Get_Time_Now(timeStr);
-//		  //HAL_RTC_GetDate(&hrtc, &clkTime, RTC_FORMAT_BCD);
-//		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
-//			  Get_Date_Now(dateStr, dataFormat);
-//		  }
-//		  if(adc1_tick){
-//			  adc1_tick = 0;
-//
-//			      if (adc1_value_thermistor > 0 && adc1_value_thermistor < 4095)
-//			      {
-//			    	  float Ntc_R = ((NTC_UP_R)/((4095.0/adc1_value_thermistor)-1));
-//			    	  float Ntc_log = log(Ntc_R);
-//			    	  tmp = (1.0f/(A+B*Ntc_log + C*Ntc_log*Ntc_log*Ntc_log))-273.15f;
-//			      }
-//			      else
-//			      {
-//			          tmp = NAN;
-//			      }
-//
-//			      HAL_ADC_Start_IT(&hadc1);
-//		  }
-//	  }
-//
-//
-//	  LCD_DrawText(8, 16, timeStr, 1);
-//	  LCD_DrawText(16, 36, dateStr, 0);
-//
-//	  int whole = (int)tmp;
-//	  int frac = (int)((tmp - whole) * 10);
-//	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%d", whole, abs(frac));
-//	  LCD_DrawText(16, 48, str_tp, 0);
+	  if (rtc_tick) {
+	      rtc_tick = 0;
+	      Get_Time_Now(timeStr);
+		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
+			  Get_Date_Now(dateStr, dataFormat);
+		  }
+		  if(adc1_tick){
+			  adc1_tick = 0;
+
+			  if (adc1_value_thermistor > 0 && adc1_value_thermistor < 4095)
+			  {
+			      float adc = (float)adc1_value_thermistor;
+			      float Ntc_R = R_FIXED * (adc / (ADC_MAX - adc));  // <-- исправленная формула
+			      float Ntc_log = logf(Ntc_R);
+			      tmp = (1.0f / (A + B*Ntc_log + C*Ntc_log*Ntc_log*Ntc_log)) - 273.15f;
+			  }
+			  else
+			  {
+			      tmp = NAN;
+			  }
+			      HAL_ADC_Start_IT(&hadc1);
+		  }
+	  }
 
 
-	  LCD_DrawText(2, 2, "hello", 1);
+	  LCD_DrawText(4, 16, timeStr, 1);
+	  LCD_DrawText(16, 36, dateStr, 0);
 
-	  //HAL_Delay(256);
+	  int whole = (int)tmp;
+	  int frac = (int)((tmp - whole) * 10);
+	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%d", whole, abs(frac));
+	  LCD_DrawText(16, 48, str_tp, 0);
 	  LCD_Update();
 
   }
@@ -304,7 +299,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_0;
+  sConfig.Channel = ADC_CHANNEL_8;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -382,6 +377,25 @@ static void MX_RTC_Init(void)
     }
   /* USER CODE END Check_RTC_BKUP */
 
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = 0x16;
+  sTime.Minutes = 0x14;
+  sTime.Seconds = 0x0;
+
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
+  DateToUpdate.Month = RTC_MONTH_OCTOBER;
+  DateToUpdate.Date = 0x16;
+  DateToUpdate.Year = 0x25;
+
+  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(RTC_IRQn);
@@ -410,8 +424,8 @@ static void MX_SPI1_Init(void)
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
   hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
-  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;//SPI_POLARITY_LOW
-  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;//SPI_PHASE_1EDGE
+  hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
   hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
@@ -449,6 +463,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LCD_A0_Pin|LCD_RST_Pin|LCD_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : P13_Pin */
@@ -457,6 +474,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(P13_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin */
+  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LCD_A0_Pin LCD_RST_Pin LCD_CS_Pin */
   GPIO_InitStruct.Pin = LCD_A0_Pin|LCD_RST_Pin|LCD_CS_Pin;

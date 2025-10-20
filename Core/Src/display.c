@@ -156,7 +156,7 @@ static void LCD_Send(uint8_t data, uint8_t isdata){
 
 void LCD_Init(){
 
-	HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_RESET);
+	  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_RESET);
 	  HAL_Delay(10);
 	  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
 	  HAL_Delay(10);
@@ -169,12 +169,12 @@ void LCD_Init(){
 	  LCD_Send(0x2F, 0);   // Power control: booster, regulator, follower ON
 	  LCD_Send(0x27, 0);   // Regulation ratio (0x24–0x27)
 	  LCD_Send(0xF8, 0);   // Booster ratio command
-	  LCD_Send(0x00, 0);   // 4x booster
+	  LCD_Send(0x01, 0);   // 5x booster
 	  LCD_Send(0x81, 0);   // Set contrast command
-	  LCD_Send(0x12, 0);   // Contrast value (0x20–0x30 обычно видно)
+	  LCD_Send(0x10, 0);   // Contrast value (0x20–0x30 обычно видно)
 	  LCD_Send(0xAC, 0);   // Static indicator off
 	  LCD_Send(0x00, 0);
-	  LCD_Send(0xA6, 0);   // Normal (not inverted)
+	  LCD_Send(0xA4, 0);   // Normal (not inverted)
 	  LCD_Send(0xAF, 0);   // Display ON
 
 	  LCD_Clear();

@@ -210,7 +210,7 @@ void RTC_IRQHandler(void)
 	if (RTC->CRL & RTC_CRL_SECF)
 			{
 		     RTC->CRL &= ~RTC_CRL_SECF;    //сбросить флаг (обязательно!!!)
-		     HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
+		     //HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
 		     rtc_tick++;
 		  }
   /* USER CODE END RTC_IRQn 0 */
