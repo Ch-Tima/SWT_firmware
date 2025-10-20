@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "display.h"
+#include "RTCManager.h"
 #include <stdio.h>
 #include <math.h>
 /* USER CODE END Includes */
@@ -61,7 +62,7 @@ float tmp = 0;
 
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
-const char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,54 +77,6 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-void Get_Time_Now(char *timeStr){
-	HAL_RTC_GetTime(&hrtc, &clkTime, RTC_FORMAT_BIN);
-	timeStr[0] = '0' + clkTime.Hours / 10;
-	timeStr[1] = '0' + clkTime.Hours % 10;
-	timeStr[2] = ':';
-	timeStr[3] = '0' + clkTime.Minutes / 10;
-	timeStr[4] = '0' + clkTime.Minutes % 10;
-	timeStr[5] = ':';
-	timeStr[6] = '0' + clkTime.Seconds / 10;
-	timeStr[7] = '0' + clkTime.Seconds % 10;
-	timeStr[8] = '\0';
-}
-
-void Get_Date_Now(char *dateStr, uint8_t format){
-	HAL_RTC_GetDate(&hrtc, &clkDate, RTC_FORMAT_BIN);
-
-
-	uint8_t pos = 0;
-	if(format >> 0 & 1){
-		const char *day = weekDays[clkDate.WeekDay];
-        for(uint8_t i = 0; i < 3; i++){
-        	dateStr[pos++] = day[i];
-        }
-		dateStr[pos++] = ' ';
-	}
-
-	if(format >> 1 & 1){
-		dateStr[pos++] = '0' + clkDate.Date / 10;
-		dateStr[pos++] = '0' + clkDate.Date % 10;
-		dateStr[pos++] = '.';
-	}
-
-	if(format >> 2 & 1){
-		dateStr[pos++] = '0' + clkDate.Month / 10;
-		dateStr[pos++] = '0' + clkDate.Month % 10;
-		dateStr[pos++] = '.';
-	}
-
-	if(format >> 3 & 1){
-		dateStr[pos++] = '0' + clkDate.Year / 10;
-		dateStr[pos++] = '0' + clkDate.Year % 10;
-		dateStr[pos++] = '.';
-	}
-
-
-	dateStr[pos-1] = '\0';
-}
 
 /* USER CODE END 0 */
 
@@ -172,8 +125,8 @@ int main(void)
   uint8_t dataFormat = 0b1111;//YYMMDDWW
   char str_tp[32];
 
-  Get_Time_Now(timeStr);
-  Get_Date_Now(dateStr, dataFormat);
+  Get_Time_Now(timeStr, &clkTime);
+  Get_Date_Now(dateStr, dataFormat, &clkDate);
   HAL_ADC_Start_IT(&hadc1);
   while (1)
   {
@@ -184,9 +137,9 @@ int main(void)
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
-	      Get_Time_Now(timeStr);
+	      Get_Time_Now(timeStr, &clkTime);
 		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
-			  Get_Date_Now(dateStr, dataFormat);
+			  Get_Date_Now(dateStr, dataFormat, &clkDate);
 		  }
 		  if(adc1_tick){
 			  adc1_tick = 0;
