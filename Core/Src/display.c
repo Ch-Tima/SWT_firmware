@@ -156,23 +156,29 @@ static void LCD_Send(uint8_t data, uint8_t isdata){
 
 void LCD_Init(){
 
-	HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_RESET);
-	HAL_Delay(10);
-	HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
+	  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_RESET);
+	  HAL_Delay(10);
+	  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
+	  HAL_Delay(10);
 
-	LCD_Send(0xAE, 0);//OFF
-	LCD_Send(0xA3, 0);// Bias 1/9Timeout >> 0xA2 (or 1/7 >> 0xA3)
-	LCD_Send(0xA1, 0);// ADC select normal A 1/0 X>>left to right or r to l
-	LCD_Send(0xC8, 0); // Common output reverse C 0/8 Y>>top to bottom or bottom to top
-	LCD_Send(0x22, 0); // Internal resistor ratio
-	LCD_Send(0x2F, 0); // Power control: booster, regulator, follower ON
-	LCD_Send(0x40, 0); // Set start line = 0
-	LCD_Send(0x81, 0);   // Command: Set Electronic Volume mode
-	LCD_Send(0x15, 0);   // Value: контраст (0x00–0x3F)
-	LCD_Send(0xAF, 0);//ON
+	  // последовательность из даташита
+	  LCD_Send(0xAE, 0);   // Display OFF
+	  LCD_Send(0xA2, 0);   // Bias 1/9
+	  LCD_Send(0xA0, 0);   // SEG direction normal
+	  LCD_Send(0xC8, 0);   // COM direction reverse (твой экран "вверх ногами" — оставить так)
+	  LCD_Send(0x2F, 0);   // Power control: booster, regulator, follower ON
+	  LCD_Send(0x27, 0);   // Regulation ratio (0x24–0x27)
+	  LCD_Send(0xF8, 0);   // Booster ratio command
+	  LCD_Send(0x01, 0);   // 5x booster
+	  LCD_Send(0x81, 0);   // Set contrast command
+	  LCD_Send(0x10, 0);   // Contrast value (0x20–0x30 обычно видно)
+	  LCD_Send(0xAC, 0);   // Static indicator off
+	  LCD_Send(0x00, 0);
+	  LCD_Send(0xA4, 0);   // Normal (not inverted)
+	  LCD_Send(0xAF, 0);   // Display ON
 
-	LCD_Clear();
-	LCD_Update();
+	  LCD_Clear();
+	  LCD_Update();
 }
 
 void LCD_Clear(){
