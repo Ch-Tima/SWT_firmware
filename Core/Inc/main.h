@@ -59,6 +59,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define P13_Pin GPIO_PIN_13
 #define P13_GPIO_Port GPIOC
+#define ADC_IN_AKB_Pin GPIO_PIN_1
+#define ADC_IN_AKB_GPIO_Port GPIOA
 #define PA2CS_Pin GPIO_PIN_2
 #define PA2CS_GPIO_Port GPIOA
 #define PA3RST_Pin GPIO_PIN_3
@@ -71,6 +73,8 @@ void Error_Handler(void);
 #define LCD_RST_GPIO_Port GPIOB
 #define LCD_CS_Pin GPIO_PIN_12
 #define LCD_CS_GPIO_Port GPIOB
+#define CHARG_Pin GPIO_PIN_8
+#define CHARG_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
