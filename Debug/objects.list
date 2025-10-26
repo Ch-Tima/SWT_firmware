@@ -1,3 +1,4 @@
+"./Core/Src/Battery.o"
 "./Core/Src/RTCManager.o"
 "./Core/Src/Thermistor.o"
 "./Core/Src/display.o"

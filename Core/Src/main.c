@@ -24,6 +24,7 @@
 #include "display.h"
 #include "RTCManager.h"
 #include "Thermistor.h"
+#include "Battery.h"
 #include <stdio.h>
 #include <math.h>
 /* USER CODE END Includes */
@@ -58,6 +59,7 @@ uint16_t _vref = 0;
 uint16_t adc1_value_battery = 0;
 uint16_t adc1_value_thermistor = 0;
 
+float vbat = 0;
 uint16_t battery_level = 0;
 
 RTC_TimeTypeDef clkTime;
@@ -72,7 +74,8 @@ static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void floatToCharArr(char *buf, float value);
+void uint16ToCharArr(char *buf, uint16_t value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,6 +126,7 @@ int main(void)
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
   char batStr[8] = {0};
+  char vbatStr[8] = {0};
   uint8_t dataFormat = 0b1111;//YYMMDDWW
   char tempC[16];
 
@@ -145,9 +149,10 @@ int main(void)
 		  if(adc1_tick){
 			  adc1_tick = 0;
 			  Thermistor_strCalcTempC(tempC, adc1_value_thermistor);
-			  float vbat = ((float)adc1_value_battery / 4095.0f) * 6.6f;
-			  battery_level = ((vbat - 3.0f) / (4.2f - 3.0f)) * 100.0f;
-	  		  floatToCharArr(batStr, battery_level);
+			  vbat = getVBat(adc1_value_battery);//TEST
+			  battery_level = getBatteryLevel(vbat);
+			  uint16ToCharArr(batStr, battery_level);
+			  floatToCharArr(vbatStr, vbat);
 			  HAL_ADC_Start_IT(&hadc1);
 		  }
 	  }
@@ -155,15 +160,17 @@ int main(void)
 
 	  if(HAL_GPIO_ReadPin(CHARG_GPIO_Port, CHARG_Pin) == GPIO_PIN_SET){
 		  LCD_DrawText(96, 4, batStr, 0);
-
 	  }else{
-		  LCD_DrawText(96, 4, "~~~", 0);
+		  LCD_DrawText(88, 6, "~", 0);
+		  LCD_DrawText(96, 4, batStr, 0);
 	  }
 
 	  LCD_DrawText(4, 16, timeStr, 1);
 	  LCD_DrawText(16, 36, dateStr, 0);
 
 	  LCD_DrawText(8, 48, tempC, 0);
+
+	  LCD_DrawText(96, 48, vbatStr, 0);
 
 	  LCD_Update();
 
@@ -479,7 +486,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 
-void floatToCharArr(char *buf, uint16_t value){
+void uint16ToCharArr(char *buf, uint16_t value){
 	char *p = buf;
 
 	uint16_t whole = (uint16_t)value;
@@ -496,6 +503,33 @@ void floatToCharArr(char *buf, uint16_t value){
     }
 
     *p++ = '%';
+    *p++ = '\0';
+
+}
+
+void floatToCharArr(char *buf, float value){
+	char *p = buf;
+
+	if (value < 0) {
+		value = -value;
+    }
+
+	uint16_t whole = (uint16_t)value;
+	uint16_t frac = (uint16_t)((value-(float)whole)*10.1f);
+
+	uint16_t div = 1;
+	while (whole/div >= 10) {
+        div *= 10;
+	}
+
+    while (div > 0){
+    	*p++ = whole / div + '0';
+    	whole %= div;
+    	div /= 10;
+    }
+
+    *p++ = '.';
+    *p++ = frac + '0';
     *p++ = '\0';
 
 }
