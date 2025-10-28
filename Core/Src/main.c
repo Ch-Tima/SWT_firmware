@@ -65,6 +65,11 @@ uint16_t battery_level = 0;
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
 
+#define BTN_UP_GPIO GPIOA
+#define BTN_UP_PIN GPIO_PIN_10
+#define BTN_DOWN_GPIO GPIOA
+#define BTN_DOWN_PIN GPIO_PIN_9
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -138,7 +143,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  LCD_Clear();
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
@@ -158,21 +162,29 @@ int main(void)
 	  }
 
 
+
+	  if(HAL_GPIO_ReadPin(BTN_UP_GPIO, BTN_UP_PIN)){
+		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+	  }else{
+		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+	  }
+
+	  //============DRAW_BEGIN============//
+	  LCD_Clear();//CLEAR
+	  //BATTERY LEVEL
 	  if(HAL_GPIO_ReadPin(CHARG_GPIO_Port, CHARG_Pin) == GPIO_PIN_SET){
 		  LCD_DrawText(96, 4, batStr, 0);
 	  }else{
 		  LCD_DrawText(88, 6, "~", 0);
 		  LCD_DrawText(96, 4, batStr, 0);
 	  }
+	  LCD_DrawText(4, 16, timeStr, 1);//TIME
+	  LCD_DrawText(16, 36, dateStr, 0);//DATE
+	  LCD_DrawText(8, 48, tempC, 0);//TEMPERATURE
+	  LCD_DrawText(96, 48, vbatStr, 0);//TEST INFO BATTERY VOLTAGES
 
-	  LCD_DrawText(4, 16, timeStr, 1);
-	  LCD_DrawText(16, 36, dateStr, 0);
-
-	  LCD_DrawText(8, 48, tempC, 0);
-
-	  LCD_DrawText(96, 48, vbatStr, 0);
-
-	  LCD_Update();
+	  LCD_Update();//UPDATE
+	  //============DRAW_END============//
 
   }
   /* USER CODE END 3 */
@@ -446,7 +458,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LCD_A0_Pin|LCD_RST_Pin|LCD_CS_Pin, GPIO_PIN_RESET);
@@ -458,8 +470,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(P13_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin */
-  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin;
+  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin LED_Pin */
+  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

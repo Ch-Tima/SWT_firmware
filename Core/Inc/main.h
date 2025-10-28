@@ -75,6 +75,8 @@ void Error_Handler(void);
 #define LCD_CS_GPIO_Port GPIOB
 #define CHARG_Pin GPIO_PIN_8
 #define CHARG_GPIO_Port GPIOA
+#define LED_Pin GPIO_PIN_11
+#define LED_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
