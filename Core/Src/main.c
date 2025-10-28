@@ -25,7 +25,6 @@
 #include "RTCManager.h"
 #include "Thermistor.h"
 #include "Battery.h"
-#include <stdio.h>
 #include <math.h>
 /* USER CODE END Includes */
 
@@ -52,23 +51,29 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-uint8_t rtc_tick = 0x0;
-uint8_t adc1_tick = 0x0;
 
+//RTC
+uint8_t rtc_tick = 0x0;
+RTC_TimeTypeDef clkTime;
+RTC_DateTypeDef clkDate;
+
+//ADC
+uint8_t adc1_tick = 0x0;
 uint16_t _vref = 0;
 uint16_t adc1_value_battery = 0;
 uint16_t adc1_value_thermistor = 0;
 
+//BATTERY
 float vbat = 0;
 uint16_t battery_level = 0;
 
-RTC_TimeTypeDef clkTime;
-RTC_DateTypeDef clkDate;
+//BUTTONS
+uint8_t longPress = 50;
+uint8_t press_tick_btnup = 0;
 
-#define BTN_UP_GPIO GPIOA
-#define BTN_UP_PIN GPIO_PIN_10
-#define BTN_DOWN_GPIO GPIOA
-#define BTN_DOWN_PIN GPIO_PIN_9
+//LCD
+uint8_t is_lcd_led_on = 0;
+
 
 /* USER CODE END PV */
 
@@ -131,7 +136,7 @@ int main(void)
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
   char batStr[8] = {0};
-  char vbatStr[8] = {0};
+  char info[16] = {0};
   uint8_t dataFormat = 0b1111;//YYMMDDWW
   char tempC[16];
 
@@ -144,6 +149,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  //============UPDATE_DATA_BEGIN============//
 	  if (rtc_tick) {
 	      rtc_tick = 0;
 	      Get_Time_Now(timeStr, &clkTime);
@@ -156,18 +162,39 @@ int main(void)
 			  vbat = getVBat(adc1_value_battery);//TEST
 			  battery_level = getBatteryLevel(vbat);
 			  uint16ToCharArr(batStr, battery_level);
-			  floatToCharArr(vbatStr, vbat);
 			  HAL_ADC_Start_IT(&hadc1);
 		  }
 	  }
 
+	  //============UPDATE_DATA_END============//
 
+	  //============BUTTONS_BEGIN============//
 
-	  if(HAL_GPIO_ReadPin(BTN_UP_GPIO, BTN_UP_PIN)){
-		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-	  }else{
-		  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+	  //OFF/ON LIGHT
+	  uint8_t btnup_status = HAL_GPIO_ReadPin(BTN_UP_GPIO, BTN_UP_PIN);
+	  //uint8_t btndown_status = HAL_GPIO_ReadPin(BTN_DOWN_GPIO, BTN_DOWN_PIN);
+	  if(!btnup_status){
+		  //If the button was pressed briefly, the backlight will turn off.
+		  if(is_lcd_led_on && press_tick_btnup == 0) is_lcd_led_on = 0;
+		  //If the button is pressed
+		  if(press_tick_btnup < longPress){
+			  HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_SET);
+		 	  press_tick_btnup++;
+		 	  //If the button is pressed for longer than "longPress", the backlight will always stay on.
+		 	  if(press_tick_btnup >= longPress) is_lcd_led_on = 1;
+		  }
 	  }
+	  else{
+		  if(!is_lcd_led_on) {
+			  HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_RESET);
+			  press_tick_btnup = 0;
+		  }
+		  if(is_lcd_led_on) press_tick_btnup = 0;
+	  }
+
+	  //uint16ToCharArr(info, press_tick_btnup);
+
+	  //============BUTTONS_END============//
 
 	  //============DRAW_BEGIN============//
 	  LCD_Clear();//CLEAR
@@ -181,7 +208,7 @@ int main(void)
 	  LCD_DrawText(4, 16, timeStr, 1);//TIME
 	  LCD_DrawText(16, 36, dateStr, 0);//DATE
 	  LCD_DrawText(8, 48, tempC, 0);//TEMPERATURE
-	  LCD_DrawText(96, 48, vbatStr, 0);//TEST INFO BATTERY VOLTAGES
+	  //LCD_DrawText(96, 48, info, 0);//TEST INFO BATTERY VOLTAGES
 
 	  LCD_Update();//UPDATE
 	  //============DRAW_END============//
@@ -458,7 +485,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LCD_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LCD_A0_Pin|LCD_RST_Pin|LCD_CS_Pin, GPIO_PIN_RESET);
@@ -470,8 +497,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(P13_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin LED_Pin */
-  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LED_Pin;
+  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin LCD_LED_Pin */
+  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LCD_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

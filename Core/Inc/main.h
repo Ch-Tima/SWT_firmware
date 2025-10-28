@@ -75,11 +75,14 @@ void Error_Handler(void);
 #define LCD_CS_GPIO_Port GPIOB
 #define CHARG_Pin GPIO_PIN_8
 #define CHARG_GPIO_Port GPIOA
-#define LED_Pin GPIO_PIN_11
-#define LED_GPIO_Port GPIOA
+#define LCD_LED_Pin GPIO_PIN_11
+#define LCD_LED_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
-
+#define BTN_UP_GPIO GPIOA
+#define BTN_UP_PIN GPIO_PIN_10
+#define BTN_DOWN_GPIO GPIOA
+#define BTN_DOWN_PIN GPIO_PIN_9
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
