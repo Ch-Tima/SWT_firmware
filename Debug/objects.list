@@ -1,6 +1,8 @@
 "./Core/Src/Battery.o"
+"./Core/Src/ButtonManager.o"
 "./Core/Src/RTCManager.o"
 "./Core/Src/Thermistor.o"
+"./Core/Src/UIManager.o"
 "./Core/Src/display.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f1xx_hal_msp.o"

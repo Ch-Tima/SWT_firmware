@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "thermistor.h": "c",
+        "main.h": "c",
+        "rtcmanager.h": "c",
+        "stm32f1xx_hal.h": "c",
+        "stm32f103x6.h": "c",
+        "buttonmanager.h": "c"
+    }
+}
