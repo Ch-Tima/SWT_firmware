@@ -83,6 +83,9 @@ void Error_Handler(void);
 #define BTN_UP_PIN GPIO_PIN_10
 #define BTN_DOWN_GPIO GPIOA
 #define BTN_DOWN_PIN GPIO_PIN_9
+
+#define MAIN_VIEW 0xA
+#define MENU_VIEW 0xB
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
