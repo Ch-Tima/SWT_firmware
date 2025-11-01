@@ -1,3 +1,4 @@
-../Core/Src/UIManager.c:16:6:UI_Init	8	static
-../Core/Src/UIManager.c:21:6:UI_Update	4	static
-../Core/Src/UIManager.c:25:9:UI_getCurrentScreen	4	static
+../Core/Src/UIManager.c:33:6:UI_Init	8	static
+../Core/Src/UIManager.c:38:6:UI_Update	16	static
+../Core/Src/UIManager.c:104:6:UI_UpdateDataFromRTC	8	static
+../Core/Src/UIManager.c:114:6:UI_UpdateDataFromADC	8	static

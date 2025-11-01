@@ -26,7 +26,6 @@
 #include "Thermistor.h"
 #include "Battery.h"
 #include "UIManager.h"
-#include "ButtonManager.h"
 #include <math.h>
 /* USER CODE END Includes */
 
@@ -65,17 +64,6 @@ uint16_t _vref = 0;
 uint16_t adc1_value_battery = 0;
 uint16_t adc1_value_thermistor = 0;
 
-//BATTERY
-float vbat = 0;
-uint16_t battery_level = 0;
-
-
-
-
-//LCD
-uint8_t is_lcd_led_on = 0;
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -85,8 +73,7 @@ static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-void floatToCharArr(char *buf, float value);
-void uint16ToCharArr(char *buf, uint16_t value);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -142,120 +129,18 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  ButtonStatus_t btnup_status = Buttons_GetState(BUTTON_UP);
-
-
-
-	  //============UPDATE_DATA_BEGIN============//
-	  // if (rtc_tick) {
-	  //     rtc_tick = 0;
-	  //     Get_Time_Now(timeStr, &clkTime);
-		//   if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
-		// 	  Get_Date_Now(dateStr, dataFormat, &clkDate);
-		//   }
-		//   if(adc1_tick){
-		// 	  adc1_tick = 0;
-		// 	  Thermistor_strCalcTempC(tempC, adc1_value_thermistor);
-		// 	  vbat = getVBat(adc1_value_battery);//TEST
-		// 	  battery_level = getBatteryLevel(vbat);
-		// 	  uint16ToCharArr(batStr, battery_level);
-		// 	  HAL_ADC_Start_IT(&hadc1);
-		//   }
-	  // }
-
-	  //============UPDATE_DATA_END============//
-
-	  //============BUTTONS_BEGIN============//
-
-	  // //OFF/ON LIGHT
-
-    if(UI_getCurrentScreen() == MAIN_VIEW){
-    	if(btnup_status == BUTTON_LONG){
-    		is_lcd_led_on = 1;
-    	}else if (btnup_status == BUTTON_SHORT){
-    		is_lcd_led_on = 0;
-    	}
-    	if(btnup_status == BUTTON_HOLD || is_lcd_led_on){
-    		HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_SET);
-    	}else{
-    		HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_RESET);
-    	}
+    if (rtc_tick) {
+      rtc_tick = 0;
+      UI_UpdateDataFromRTC();
+      if(adc1_tick){
+           adc1_tick = 0;
+           UI_UpdateDataFromADC();
+           HAL_ADC_Start_IT(&hadc1);
+      }
     }
-
-	  // uint8_t btnup_status = HAL_GPIO_ReadPin(BTN_UP_GPIO, BTN_UP_PIN);
-	  // uint8_t btndown_status = HAL_GPIO_ReadPin(BTN_DOWN_GPIO, BTN_DOWN_PIN);
-	  // if(!btnup_status){
-		//   if(menu_id == MAIN_VIEW){
-    //     //If the button was pressed briefly, the backlight will turn off.
-    //     if(is_lcd_led_on && press_tick_btnup == 0) is_lcd_led_on = 0;
-    //     //If the button is pressed
-    //     if(press_tick_btnup < longPress){
-    //       HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_SET);
-    //       press_tick_btnup++;
-    //       //If the button is pressed for longer than "longPress", the backlight will always stay on.
-    //       if(press_tick_btnup >= longPress) is_lcd_led_on = 1;
-    //     }
-    //   }else{
-
-    //   }
-	  // }
-	  // else{
-		//   if(menu_id == MAIN_VIEW){
-    //     if(!is_lcd_led_on) {
-    //       HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_RESET);
-    //       press_tick_btnup = 0;
-    //     }
-    //     if(is_lcd_led_on) press_tick_btnup = 0;
-    //   }else{
-
-    //   }
-	  // }
-
-	  // if(!btndown_status){
-		//   if(menu_id == MAIN_VIEW){
-		// 	  menu_id = MENU_VIEW;//Open menu
-		//   }else if(menu_id == MENU_VIEW && press_tick_btndown < longPress){
-		// 	  press_tick_btndown++;
-		//   }else {
-		// 	  //NOTHING
-		//   }
-	  // }else {
-		//   if(menu_id == MENU_VIEW && press_tick_btndown >= longPress){
-		// 	  menu_id = MAIN_VIEW;
-		//   }
-		//   press_tick_btndown = 0;
-	  // }
-
-	  //uint16ToCharArr(info, press_tick_btndown);
-
-
-	  //============BUTTONS_END============//
-
-	  //============DRAW_BEGIN============//
-	  LCD_Clear();//CLEAR
-	  //BATTERY LEVEL
-	  // if(menu_id == MAIN_VIEW){
-		//   if(HAL_GPIO_ReadPin(CHARG_GPIO_Port, CHARG_Pin) == GPIO_PIN_SET){
-		// 	  LCD_DrawText(96, 4, batStr, 0);
-		//   }else{
-		// 	  LCD_DrawText(88, 6, "~", 0);
-		// 	  LCD_DrawText(96, 4, batStr, 0);
-		//   }
-		//   LCD_DrawText(4, 16, timeStr, 1);//TIME
-		//   LCD_DrawText(16, 36, dateStr, 0);//DATE
-		//   LCD_DrawText(8, 48, tempC, 0);//TEMPERATURE
-	  // }else if(menu_id == MENU_VIEW){
-		//   LCD_DrawText(4, 4, "Set Time", 0);
-		//   LCD_DrawText(4, 18, "Set Date", 0);
-		//   LCD_DrawText(4, 30, "Set Battery", 0);
-		//   LCD_DrawText(4, 42, info, 0);
-	  // }
-
-
-	  LCD_Update();//UPDATE
-	  //============DRAW_END============//
-
-	  HAL_Delay(10);
+    
+    UI_Update();
+    HAL_Delay(10);
 
   }
   /* USER CODE END 3 */
@@ -567,55 +452,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-
-void uint16ToCharArr(char *buf, uint16_t value){
-	char *p = buf;
-
-	uint16_t whole = (uint16_t)value;
-
-	uint16_t div = 1;
-	while (whole/div >= 10) {
-        div *= 10;
-	}
-
-    while (div > 0){
-    	*p++ = whole / div + '0';
-    	whole %= div;
-    	div /= 10;
-    }
-
-    *p++ = '%';
-    *p++ = '\0';
-
-}
-
-void floatToCharArr(char *buf, float value){
-	char *p = buf;
-
-	if (value < 0) {
-		value = -value;
-    }
-
-	uint16_t whole = (uint16_t)value;
-	uint16_t frac = (uint16_t)((value-(float)whole)*10.1f);
-
-	uint16_t div = 1;
-	while (whole/div >= 10) {
-        div *= 10;
-	}
-
-    while (div > 0){
-    	*p++ = whole / div + '0';
-    	whole %= div;
-    	div /= 10;
-    }
-
-    *p++ = '.';
-    *p++ = frac + '0';
-    *p++ = '\0';
-
-}
 
 /* USER CODE END 4 */
 

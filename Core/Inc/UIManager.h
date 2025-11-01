@@ -6,6 +6,8 @@
 #include "Battery.h"
 #include "Thermistor.h"
 #include "RTCManager.h"
+#include "ButtonManager.h"
+#include "Utils.h"
 #include "main.h"
 
 #define MAIN_VIEW 0xA
@@ -17,7 +19,8 @@
 
 void UI_Init(void);
 void UI_Update();
-uint8_t UI_getCurrentScreen();
+void UI_UpdateDataFromRTC();
+void UI_UpdateDataFromADC();
 
 #endif
 
