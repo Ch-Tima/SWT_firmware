@@ -1,4 +1,4 @@
-../Core/Src/UIManager.c:45:6:UI_Init	8	static
-../Core/Src/UIManager.c:50:6:UI_Update	16	static
-../Core/Src/UIManager.c:140:6:UI_UpdateDataFromRTC	8	static
-../Core/Src/UIManager.c:150:6:UI_UpdateDataFromADC	8	static
+../Core/Src/UIManager.c:50:6:UI_Init	8	static
+../Core/Src/UIManager.c:55:6:UI_Update	16	static
+../Core/Src/UIManager.c:156:6:UI_UpdateDataFromRTC	8	static
+../Core/Src/UIManager.c:166:6:UI_UpdateDataFromADC	8	static

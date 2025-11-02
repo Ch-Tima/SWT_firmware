@@ -1,0 +1,2 @@
+../Core/Src/UI/UI_SetTime.c:17:6:UI_Time_Init	4	static
+../Core/Src/UI/UI_SetTime.c:32:6:UI_Time_Draw	8	static
