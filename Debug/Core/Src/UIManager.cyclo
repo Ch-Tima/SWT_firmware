@@ -1,4 +1,4 @@
-../Core/Src/UIManager.c:33:6:UI_Init	1
-../Core/Src/UIManager.c:38:6:UI_Update	13
-../Core/Src/UIManager.c:104:6:UI_UpdateDataFromRTC	4
-../Core/Src/UIManager.c:114:6:UI_UpdateDataFromADC	1
+../Core/Src/UIManager.c:45:6:UI_Init	1
+../Core/Src/UIManager.c:50:6:UI_Update	19
+../Core/Src/UIManager.c:140:6:UI_UpdateDataFromRTC	4
+../Core/Src/UIManager.c:150:6:UI_UpdateDataFromADC	1

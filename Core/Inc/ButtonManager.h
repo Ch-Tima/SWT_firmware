@@ -7,7 +7,7 @@
 
 #define LONG_CLICK 50
 #define LONG_HOLD 10
-#define SHORT_CLICK 5
+#define SHORT_CLICK 3
 
 typedef enum {
     BUTTON_NONE,

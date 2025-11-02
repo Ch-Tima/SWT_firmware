@@ -8,6 +8,7 @@
         "buttonmanager.h": "c",
         "stdint.h": "c",
         "uimanager.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "stdbool.h": "c"
     }
 }

@@ -16,6 +16,18 @@ static float vbat = 0;//voltage
 static uint16_t battery_level = 0;//percentage
 static char batStr[8] = {0};//percentage as string
 
+//MENU
+MenuItem list_menu[] = {
+    { "Set Time", UI_SET_TIME, 1 },
+    { "Set Date", UI_SET_DATE, 0 },
+    { "Setup Battery", UI_SETUP_BATTERY, 0 },
+    { "Setup Click", UI_SETUP_CLK, 0 },
+    { "About", UI_INFO, 0 }
+};
+
+static uint8_t currentMenuIndex = 0;
+static uint8_t menuSize = sizeof(list_menu)/sizeof(MenuItem);
+
 //OTHER
 static char info[16] = {0};//Debug info
 
@@ -65,6 +77,26 @@ void UI_Update(){
         }else if(btndown_status == BUTTON_LONG){
             currentScreen = MAIN_VIEW;//GO BACK
         }
+        
+
+        if(btnup_status == BUTTON_SHORT){
+            list_menu[currentMenuIndex].isSelect = 0;
+            if(currentMenuIndex == 0){
+                currentMenuIndex = menuSize-1;
+            }else{
+                currentMenuIndex--;
+            }
+            list_menu[currentMenuIndex].isSelect = 1;
+        }else if(btndown_status == BUTTON_SHORT){
+            list_menu[currentMenuIndex].isSelect = 0;
+            if(currentMenuIndex >= menuSize-1){
+                currentMenuIndex = 0;
+            }else{
+                currentMenuIndex++;
+            }
+            list_menu[currentMenuIndex].isSelect = 1;
+        }
+        
     }
 
 //============BUTTONS_END============//
@@ -86,10 +118,14 @@ void UI_Update(){
 
     }else if (currentScreen == MENU_VIEW){
         // Draw simple static menu
-        LCD_DrawText(4, 4, "Set Time", 0);
-        LCD_DrawText(4, 18, "Set Date", 0);
-        LCD_DrawText(4, 30, "Set Battery", 0);
-        LCD_DrawText(4, 42, "About", 0);
+        for(uint8_t i = 0; i < (sizeof(list_menu)/sizeof(MenuItem)); i++){
+            if(list_menu[i].isSelect){
+                LCD_DrawText(4, (4*(i*3)), ">", 0);
+                LCD_DrawText(12, (4*(i*3)), list_menu[i].title, 0);
+            }else{
+                LCD_DrawText(4, (4*(i*3)), list_menu[i].title, 0);
+            }
+        }
     }
     LCD_Update();   
 //============DRAW_END============//
