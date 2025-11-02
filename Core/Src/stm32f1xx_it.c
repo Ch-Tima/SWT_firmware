@@ -58,9 +58,13 @@
 extern ADC_HandleTypeDef hadc1;
 extern RTC_HandleTypeDef hrtc;
 /* USER CODE BEGIN EV */
+//ticks
 extern volatile uint8_t rtc_tick;
 extern volatile uint8_t adc1_tick;
-extern volatile uint32_t adc1_value_thermistor;
+//values
+extern volatile uint16_t _vref;
+extern volatile uint16_t adc1_value_battery;
+extern volatile uint16_t adc1_value_thermistor;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -210,7 +214,6 @@ void RTC_IRQHandler(void)
 	if (RTC->CRL & RTC_CRL_SECF)
 			{
 		     RTC->CRL &= ~RTC_CRL_SECF;    //сбросить флаг (обязательно!!!)
-		     //HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
 		     rtc_tick++;
 		  }
   /* USER CODE END RTC_IRQn 0 */
@@ -227,8 +230,10 @@ void ADC1_2_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC1_2_IRQn 0 */
 	if(hadc1.Instance == ADC1){
-		adc1_value_thermistor = HAL_ADC_GetValue(&hadc1);
-		HAL_ADC_Stop(&hadc1);
+		_vref = HAL_ADC_GetValue(&hadc1);
+		adc1_value_battery = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
+		adc1_value_thermistor = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
+		HAL_ADC_Stop_IT(&hadc1);
 		adc1_tick=1;
 	}
   /* USER CODE END ADC1_2_IRQn 0 */

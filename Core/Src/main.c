@@ -22,6 +22,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "display.h"
+#include "RTCManager.h"
+#include "Thermistor.h"
+#include "Battery.h"
 #include <stdio.h>
 #include <math.h>
 /* USER CODE END Includes */
@@ -51,17 +54,17 @@ SPI_HandleTypeDef hspi1;
 /* USER CODE BEGIN PV */
 uint8_t rtc_tick = 0x0;
 uint8_t adc1_tick = 0x0;
-uint32_t adc1_value_thermistor = 0;
-float tmp = 0;
-#define A 0.0008397788656f
-#define B 0.0002006238973f
-#define C 0.0000001356660f
-#define R_FIXED 10980.0f
-#define ADC_MAX 4095.0f
+
+uint16_t _vref = 0;
+uint16_t adc1_value_battery = 0;
+uint16_t adc1_value_thermistor = 0;
+
+float vbat = 0;
+uint16_t battery_level = 0;
 
 RTC_TimeTypeDef clkTime;
 RTC_DateTypeDef clkDate;
-const char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,59 +74,12 @@ static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-
+void floatToCharArr(char *buf, float value);
+void uint16ToCharArr(char *buf, uint16_t value);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-void Get_Time_Now(char *timeStr){
-	HAL_RTC_GetTime(&hrtc, &clkTime, RTC_FORMAT_BIN);
-	timeStr[0] = '0' + clkTime.Hours / 10;
-	timeStr[1] = '0' + clkTime.Hours % 10;
-	timeStr[2] = ':';
-	timeStr[3] = '0' + clkTime.Minutes / 10;
-	timeStr[4] = '0' + clkTime.Minutes % 10;
-	timeStr[5] = ':';
-	timeStr[6] = '0' + clkTime.Seconds / 10;
-	timeStr[7] = '0' + clkTime.Seconds % 10;
-	timeStr[8] = '\0';
-}
-
-void Get_Date_Now(char *dateStr, uint8_t format){
-	HAL_RTC_GetDate(&hrtc, &clkDate, RTC_FORMAT_BIN);
-
-
-	uint8_t pos = 0;
-	if(format >> 0 & 1){
-		const char *day = weekDays[clkDate.WeekDay];
-        for(uint8_t i = 0; i < 3; i++){
-        	dateStr[pos++] = day[i];
-        }
-		dateStr[pos++] = ' ';
-	}
-
-	if(format >> 1 & 1){
-		dateStr[pos++] = '0' + clkDate.Date / 10;
-		dateStr[pos++] = '0' + clkDate.Date % 10;
-		dateStr[pos++] = '.';
-	}
-
-	if(format >> 2 & 1){
-		dateStr[pos++] = '0' + clkDate.Month / 10;
-		dateStr[pos++] = '0' + clkDate.Month % 10;
-		dateStr[pos++] = '.';
-	}
-
-	if(format >> 3 & 1){
-		dateStr[pos++] = '0' + clkDate.Year / 10;
-		dateStr[pos++] = '0' + clkDate.Year % 10;
-		dateStr[pos++] = '.';
-	}
-
-
-	dateStr[pos-1] = '\0';
-}
 
 /* USER CODE END 0 */
 
@@ -169,11 +125,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   char timeStr[9];
   char dateStr[13] = {0}; //WWW DD/MM/YY
+  char batStr[8] = {0};
+  char vbatStr[8] = {0};
   uint8_t dataFormat = 0b1111;//YYMMDDWW
-  char str_tp[32];
+  char tempC[16];
 
-  Get_Time_Now(timeStr);
-  Get_Date_Now(dateStr, dataFormat);
+  Get_Time_Now(timeStr, &clkTime);
+  Get_Date_Now(dateStr, dataFormat, &clkDate);
   HAL_ADC_Start_IT(&hadc1);
   while (1)
   {
@@ -184,36 +142,36 @@ int main(void)
 
 	  if (rtc_tick) {
 	      rtc_tick = 0;
-	      Get_Time_Now(timeStr);
+	      Get_Time_Now(timeStr, &clkTime);
 		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
-			  Get_Date_Now(dateStr, dataFormat);
+			  Get_Date_Now(dateStr, dataFormat, &clkDate);
 		  }
 		  if(adc1_tick){
 			  adc1_tick = 0;
-
-			  if (adc1_value_thermistor > 0 && adc1_value_thermistor < 4095)
-			  {
-			      float adc = (float)adc1_value_thermistor;
-			      float Ntc_R = R_FIXED * (adc / (ADC_MAX - adc));  // <-- исправленная формула
-			      float Ntc_log = logf(Ntc_R);
-			      tmp = (1.0f / (A + B*Ntc_log + C*Ntc_log*Ntc_log*Ntc_log)) - 273.15f;
-			  }
-			  else
-			  {
-			      tmp = NAN;
-			  }
-			      HAL_ADC_Start_IT(&hadc1);
+			  Thermistor_strCalcTempC(tempC, adc1_value_thermistor);
+			  vbat = getVBat(adc1_value_battery);//TEST
+			  battery_level = getBatteryLevel(vbat);
+			  uint16ToCharArr(batStr, battery_level);
+			  floatToCharArr(vbatStr, vbat);
+			  HAL_ADC_Start_IT(&hadc1);
 		  }
 	  }
 
 
+	  if(HAL_GPIO_ReadPin(CHARG_GPIO_Port, CHARG_Pin) == GPIO_PIN_SET){
+		  LCD_DrawText(96, 4, batStr, 0);
+	  }else{
+		  LCD_DrawText(88, 6, "~", 0);
+		  LCD_DrawText(96, 4, batStr, 0);
+	  }
+
 	  LCD_DrawText(4, 16, timeStr, 1);
 	  LCD_DrawText(16, 36, dateStr, 0);
 
-	  int whole = (int)tmp;
-	  int frac = (int)((tmp - whole) * 10);
-	  snprintf(str_tp, sizeof(str_tp)-1, "%d.%d", whole, abs(frac));
-	  LCD_DrawText(16, 48, str_tp, 0);
+	  LCD_DrawText(8, 48, tempC, 0);
+
+	  LCD_DrawText(96, 48, vbatStr, 0);
+
 	  LCD_Update();
 
   }
@@ -278,6 +236,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE END ADC1_Init 0 */
 
   ADC_ChannelConfTypeDef sConfig = {0};
+  ADC_InjectionConfTypeDef sConfigInjected = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
 
@@ -286,7 +245,7 @@ static void MX_ADC1_Init(void)
   /** Common config
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -303,6 +262,30 @@ static void MX_ADC1_Init(void)
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Injected Channel
+  */
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_1;
+  sConfigInjected.InjectedRank = ADC_INJECTED_RANK_1;
+  sConfigInjected.InjectedNbrOfConversion = 2;
+  sConfigInjected.InjectedSamplingTime = ADC_SAMPLETIME_28CYCLES_5;
+  sConfigInjected.ExternalTrigInjecConv = ADC_INJECTED_SOFTWARE_START;
+  sConfigInjected.AutoInjectedConv = ENABLE;
+  sConfigInjected.InjectedDiscontinuousConvMode = DISABLE;
+  sConfigInjected.InjectedOffset = 0;
+  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Injected Channel
+  */
+  sConfigInjected.InjectedChannel = ADC_CHANNEL_8;
+  sConfigInjected.InjectedRank = ADC_INJECTED_RANK_2;
+  if (HAL_ADCEx_InjectedConfigChannel(&hadc1, &sConfigInjected) != HAL_OK)
   {
     Error_Handler();
   }
@@ -489,12 +472,67 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : CHARG_Pin */
+  GPIO_InitStruct.Pin = CHARG_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(CHARG_GPIO_Port, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+
+
+void uint16ToCharArr(char *buf, uint16_t value){
+	char *p = buf;
+
+	uint16_t whole = (uint16_t)value;
+
+	uint16_t div = 1;
+	while (whole/div >= 10) {
+        div *= 10;
+	}
+
+    while (div > 0){
+    	*p++ = whole / div + '0';
+    	whole %= div;
+    	div /= 10;
+    }
+
+    *p++ = '%';
+    *p++ = '\0';
+
+}
+
+void floatToCharArr(char *buf, float value){
+	char *p = buf;
+
+	if (value < 0) {
+		value = -value;
+    }
+
+	uint16_t whole = (uint16_t)value;
+	uint16_t frac = (uint16_t)((value-(float)whole)*10.1f);
+
+	uint16_t div = 1;
+	while (whole/div >= 10) {
+        div *= 10;
+	}
+
+    while (div > 0){
+    	*p++ = whole / div + '0';
+    	whole %= div;
+    	div /= 10;
+    }
+
+    *p++ = '.';
+    *p++ = frac + '0';
+    *p++ = '\0';
+
+}
 
 /* USER CODE END 4 */
 
