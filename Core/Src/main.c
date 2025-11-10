@@ -140,7 +140,7 @@ int main(void)
     }
     
     UI_Update();
-    HAL_Delay(10);
+    HAL_Delay(1);
 
   }
   /* USER CODE END 3 */
@@ -295,18 +295,18 @@ static void MX_RTC_Init(void)
   /* USER CODE BEGIN Check_RTC_BKUP */
   if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F)
     {
-  	  	sTime.Hours = 0x15;
-  	    sTime.Minutes = 0x18;
-  	    sTime.Seconds = 0x40;
+  	  	sTime.Hours = 0x11;
+  	    sTime.Minutes = 0x59;
+  	    sTime.Seconds = 0x59;
 
   	    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
   	    {
   	      Error_Handler();
   	    }
-  	  DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
-  	  DateToUpdate.Month = RTC_MONTH_OCTOBER;
-  	  DateToUpdate.Date = 0x16;
-  	  DateToUpdate.Year = 0x25;
+        DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
+        DateToUpdate.Month = RTC_MONTH_OCTOBER;
+        DateToUpdate.Date = 0x16;
+        DateToUpdate.Year = 0x25;
 
   	    if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
   	    {
@@ -328,25 +328,7 @@ static void MX_RTC_Init(void)
     }
   /* USER CODE END Check_RTC_BKUP */
 
-  /** Initialize RTC and set the Time and Date
-  */
-  sTime.Hours = 0x16;
-  sTime.Minutes = 0x14;
-  sTime.Seconds = 0x0;
 
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
-  DateToUpdate.Month = RTC_MONTH_OCTOBER;
-  DateToUpdate.Date = 0x16;
-  DateToUpdate.Year = 0x25;
-
-  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(RTC_IRQn);
@@ -468,6 +450,10 @@ void Error_Handler(void)
   {
 	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
 	  HAL_Delay(250);
+
+    LCD_Clear();
+    LCD_DrawText(8, 8, "???", 1);
+    LCD_Update();
   }
   /* USER CODE END Error_Handler_Debug */
 }

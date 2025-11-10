@@ -35,6 +35,7 @@ typedef struct {
 
 void UI_Init(void);
 void UI_Update();
+void UI_SetView(uint8_t id);
 void UI_UpdateDataFromRTC();
 void UI_UpdateDataFromADC();
 

@@ -61,7 +61,7 @@ void UI_Update(){
     if(currentScreen == MAIN_VIEW){
         //OFF/ON LIGHT
         //Handle LCD backlight control
-    	if(btnup_status == BUTTON_LONG){
+    	if(btnup_status == BUTTON_HOLD){
     		is_lcd_led_on = 1;//Long press turns backlight ON permanently
     	}else if (btnup_status == BUTTON_SHORT){
     		is_lcd_led_on = 0;//Short press turns backlight OFF
@@ -77,7 +77,7 @@ void UI_Update(){
             currentScreen = MENU_VIEW;
         }
     }else if(currentScreen == MENU_VIEW){
-        if (btnup_status == BUTTON_HOLD){
+        if (btnup_status == BUTTON_LONG || btnup_status  == BUTTON_HOLD){
             currentScreen = list_menu[currentMenuIndex].menuId;
             if(currentScreen == UI_SET_TIME){
                 UI_Time_Init();
@@ -105,6 +105,8 @@ void UI_Update(){
             list_menu[currentMenuIndex].isSelect = 1;
         }
         
+    }else{
+
     }
 
 //============BUTTONS_END============//
@@ -138,8 +140,8 @@ void UI_Update(){
         }
         LCD_DrawChar(100, 32, 'B');
     }else if(currentScreen == UI_SET_TIME){
-        UI_Time_Draw();
-        LCD_DrawChar(100, 32, 't');
+        UI_Time_Draw(btnup_status, btndown_status);
+        LCD_DrawChar(100, 54, 't');
     }
 
     
@@ -147,6 +149,10 @@ void UI_Update(){
 //============DRAW_END============//
 
     
+}
+
+void UI_SetView(uint8_t id){
+    currentScreen = id;
 }
 
 /*
