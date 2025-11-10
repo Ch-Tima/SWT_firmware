@@ -1,3 +1,9 @@
+/*
+ * UIManager.h
+ *
+ *  Created on: Oct 24, 2025
+ *      Author: Ch-Tima
+ */
 #ifndef UI_MANAGER_H
 #define UI_MANAGER_H
 
@@ -9,6 +15,9 @@
 #include "ButtonManager.h"
 #include "Utils.h"
 #include "main.h"
+
+//UI
+#include "UI/UI_SetTime.h"
 
 #define MAIN_VIEW 0xA
 #define MENU_VIEW 0xB
@@ -26,6 +35,7 @@ typedef struct {
 
 void UI_Init(void);
 void UI_Update();
+void UI_SetView(uint8_t id);
 void UI_UpdateDataFromRTC();
 void UI_UpdateDataFromADC();
 

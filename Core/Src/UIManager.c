@@ -1,3 +1,9 @@
+/*
+ * UIManager.c
+ *
+ *  Created on: Oct 20, 2025
+ *      Author: Ch-Tima
+ */
 #include "UIManager.h"
 
 //LCD
@@ -24,7 +30,6 @@ MenuItem list_menu[] = {
     { "Setup Click", UI_SETUP_CLK, 0 },
     { "About", UI_INFO, 0 }
 };
-
 static uint8_t currentMenuIndex = 0;
 static uint8_t menuSize = sizeof(list_menu)/sizeof(MenuItem);
 
@@ -56,7 +61,7 @@ void UI_Update(){
     if(currentScreen == MAIN_VIEW){
         //OFF/ON LIGHT
         //Handle LCD backlight control
-    	if(btnup_status == BUTTON_LONG){
+    	if(btnup_status == BUTTON_HOLD){
     		is_lcd_led_on = 1;//Long press turns backlight ON permanently
     	}else if (btnup_status == BUTTON_SHORT){
     		is_lcd_led_on = 0;//Short press turns backlight OFF
@@ -72,8 +77,11 @@ void UI_Update(){
             currentScreen = MENU_VIEW;
         }
     }else if(currentScreen == MENU_VIEW){
-        if (btnup_status == BUTTON_LONG){
-
+        if (btnup_status == BUTTON_LONG || btnup_status  == BUTTON_HOLD){
+            currentScreen = list_menu[currentMenuIndex].menuId;
+            if(currentScreen == UI_SET_TIME){
+                UI_Time_Init();
+            }
         }else if(btndown_status == BUTTON_LONG){
             currentScreen = MAIN_VIEW;//GO BACK
         }
@@ -97,6 +105,8 @@ void UI_Update(){
             list_menu[currentMenuIndex].isSelect = 1;
         }
         
+    }else{
+
     }
 
 //============BUTTONS_END============//
@@ -116,6 +126,8 @@ void UI_Update(){
 		LCD_DrawText(16, 36, dateStr, 0);//DATE
 		LCD_DrawText(8, 48, tempC, 0);//TEMPERATURE
 
+
+        LCD_DrawChar(100, 32, 'A');
     }else if (currentScreen == MENU_VIEW){
         // Draw simple static menu
         for(uint8_t i = 0; i < (sizeof(list_menu)/sizeof(MenuItem)); i++){
@@ -126,11 +138,21 @@ void UI_Update(){
                 LCD_DrawText(4, (4*(i*3)), list_menu[i].title, 0);
             }
         }
+        LCD_DrawChar(100, 32, 'B');
+    }else if(currentScreen == UI_SET_TIME){
+        UI_Time_Draw(btnup_status, btndown_status);
+        LCD_DrawChar(100, 54, 't');
     }
+
+    
     LCD_Update();   
 //============DRAW_END============//
 
     
+}
+
+void UI_SetView(uint8_t id){
+    currentScreen = id;
 }
 
 /*

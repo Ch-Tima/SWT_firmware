@@ -9,6 +9,10 @@
         "stdint.h": "c",
         "uimanager.h": "c",
         "utils.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "ui_settime.h": "c",
+        "cstdint": "c",
+        "random": "c",
+        "display.h": "c"
     }
 }
