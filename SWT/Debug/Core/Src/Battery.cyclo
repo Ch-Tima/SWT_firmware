@@ -1,2 +1,2 @@
-../Core/Src/Battery.c:11:7:getVBat	1
-../Core/Src/Battery.c:15:7:getBatteryLevel	2
+../Core/Src/Battery.c:21:7:getVBat	1
+../Core/Src/Battery.c:25:7:getBatteryLevel	2

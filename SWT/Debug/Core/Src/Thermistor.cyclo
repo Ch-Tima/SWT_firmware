@@ -1,2 +1,2 @@
-../Core/Src/Thermistor.c:11:7:Thermistor_CalcTempC	3
-../Core/Src/Thermistor.c:25:6:Thermistor_strCalcTempC	5
+../Core/Src/Thermistor.c:21:7:Thermistor_CalcTempC	3
+../Core/Src/Thermistor.c:35:6:Thermistor_strCalcTempC	5

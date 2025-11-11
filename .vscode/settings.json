@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "buttonmanager.h": "c",
+        "display.h": "c",
+        "uimanager.h": "c",
+        "utils.h": "c",
+        "thermistor.h": "c",
+        "rtcmanager.h": "c",
+        "battery.h": "c",
+        "ui_settime.h": "c"
+    }
+}

@@ -27,25 +27,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000029  00000000  00000000  000074ac  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0000af4f  00000000  00000000  000074d5  2**0
+ 12 .debug_info   0000af52  00000000  00000000  000074d5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00002b13  00000000  00000000  00012424  2**0
+ 13 .debug_abbrev 00002b2d  00000000  00000000  00012427  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00000b68  00000000  00000000  00014f38  2**3
+ 14 .debug_aranges 00000b68  00000000  00000000  00014f58  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 00000871  00000000  00000000  00015aa0  2**0
+ 15 .debug_rnglists 00000871  00000000  00000000  00015ac0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  000189a8  00000000  00000000  00016311  2**0
+ 16 .debug_macro  000189a8  00000000  00000000  00016331  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000e2d9  00000000  00000000  0002ecb9  2**0
+ 17 .debug_line   0000e2e2  00000000  00000000  0002ecd9  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00087141  00000000  00000000  0003cf92  2**0
+ 18 .debug_str    00087141  00000000  00000000  0003cfbb  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000c40d3  2**0
+ 19 .comment      00000043  00000000  00000000  000c40fc  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00002e2c  00000000  00000000  000c4118  2**2
+ 20 .debug_frame  00002e2c  00000000  00000000  000c4140  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000067  00000000  00000000  000c6f44  2**0
+ 21 .debug_line_str 00000067  00000000  00000000  000c6f6c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -639,11 +639,18 @@ Disassembly of section .text:
  800075e:	bf00      	nop
 
 08000760 <getVBat>:
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+#include "Battery.h"
+
+float getVBat(uint16_t adc_value){
  8000760:	b580      	push	{r7, lr}
  8000762:	b082      	sub	sp, #8
  8000764:	af00      	add	r7, sp, #0
  8000766:	4603      	mov	r3, r0
  8000768:	80fb      	strh	r3, [r7, #6]
+	return ((float)adc_value / ADC_MAX) * NORMAL_VCC * DIVIDER_RATIO;
  800076a:	88fb      	ldrh	r3, [r7, #6]
  800076c:	4618      	mov	r0, r3
  800076e:	f7ff fda3 	bl	80002b8 <__aeabi_ui2f>
@@ -660,6 +667,7 @@ Disassembly of section .text:
  800078a:	4618      	mov	r0, r3
  800078c:	f7ff fce4 	bl	8000158 <__addsf3>
  8000790:	4603      	mov	r3, r0
+}
  8000792:	4618      	mov	r0, r3
  8000794:	3708      	adds	r7, #8
  8000796:	46bd      	mov	sp, r7
@@ -669,10 +677,13 @@ Disassembly of section .text:
  80007a0:	40533333 	.word	0x40533333
 
 080007a4 <getBatteryLevel>:
+
+float getBatteryLevel(float vbat){
  80007a4:	b580      	push	{r7, lr}
  80007a6:	b082      	sub	sp, #8
  80007a8:	af00      	add	r7, sp, #0
  80007aa:	6078      	str	r0, [r7, #4]
+	if(vbat <= 0.0f) return 0.0f;
  80007ac:	f04f 0100 	mov.w	r1, #0
  80007b0:	6878      	ldr	r0, [r7, #4]
  80007b2:	f7ff ff81 	bl	80006b8 <__aeabi_fcmple>
@@ -681,6 +692,7 @@ Disassembly of section .text:
  80007ba:	d002      	beq.n	80007c2 <getBatteryLevel+0x1e>
  80007bc:	f04f 0300 	mov.w	r3, #0
  80007c0:	e00e      	b.n	80007e0 <getBatteryLevel+0x3c>
+	return ((vbat - MIN_V) / (MAX_V - MIN_V)) * 100.0f;
  80007c2:	4909      	ldr	r1, [pc, #36]	@ (80007e8 <getBatteryLevel+0x44>)
  80007c4:	6878      	ldr	r0, [r7, #4]
  80007c6:	f7ff fcc5 	bl	8000154 <__aeabi_fsub>
@@ -693,6 +705,7 @@ Disassembly of section .text:
  80007d8:	4618      	mov	r0, r3
  80007da:	f7ff fdc5 	bl	8000368 <__aeabi_fmul>
  80007de:	4603      	mov	r3, r0
+}
  80007e0:	4618      	mov	r0, r3
  80007e2:	3708      	adds	r7, #8
  80007e4:	46bd      	mov	sp, r7
@@ -702,95 +715,150 @@ Disassembly of section .text:
  80007f0:	42c80000 	.word	0x42c80000
 
 080007f4 <Buttons_GetState>:
+static uint8_t press_tick_btndown = 0;
+
+static uint8_t last_state_btnup = 1;
+static uint8_t last_state_btndown = 1;
+
+ButtonStatus_t Buttons_GetState(ButtonID_t btn_id){
  80007f4:	b580      	push	{r7, lr}
  80007f6:	b088      	sub	sp, #32
  80007f8:	af00      	add	r7, sp, #0
  80007fa:	4603      	mov	r3, r0
  80007fc:	71fb      	strb	r3, [r7, #7]
+    GPIO_TypeDef *gpio;
+    uint16_t pin;
+    uint8_t *tick;
+    uint8_t *last_tick;
+
+    if(btn_id == BUTTON_UP){
  80007fe:	79fb      	ldrb	r3, [r7, #7]
  8000800:	2b00      	cmp	r3, #0
  8000802:	d109      	bne.n	8000818 <Buttons_GetState+0x24>
+        gpio = BTN_UP_GPIO;
  8000804:	4b2b      	ldr	r3, [pc, #172]	@ (80008b4 <Buttons_GetState+0xc0>)
  8000806:	61fb      	str	r3, [r7, #28]
+        pin = BTN_UP_PIN;
  8000808:	f44f 6380 	mov.w	r3, #1024	@ 0x400
  800080c:	837b      	strh	r3, [r7, #26]
+        tick = &press_tick_btnup;
  800080e:	4b2a      	ldr	r3, [pc, #168]	@ (80008b8 <Buttons_GetState+0xc4>)
  8000810:	617b      	str	r3, [r7, #20]
+        last_tick = &last_state_btnup;
  8000812:	4b2a      	ldr	r3, [pc, #168]	@ (80008bc <Buttons_GetState+0xc8>)
  8000814:	613b      	str	r3, [r7, #16]
  8000816:	e008      	b.n	800082a <Buttons_GetState+0x36>
+    }else{
+        gpio = BTN_DOWN_GPIO;
  8000818:	4b26      	ldr	r3, [pc, #152]	@ (80008b4 <Buttons_GetState+0xc0>)
  800081a:	61fb      	str	r3, [r7, #28]
+        pin = BTN_DOWN_PIN;
  800081c:	f44f 7300 	mov.w	r3, #512	@ 0x200
  8000820:	837b      	strh	r3, [r7, #26]
+        tick = &press_tick_btndown;
  8000822:	4b27      	ldr	r3, [pc, #156]	@ (80008c0 <Buttons_GetState+0xcc>)
  8000824:	617b      	str	r3, [r7, #20]
+        last_tick = &last_state_btndown;
  8000826:	4b27      	ldr	r3, [pc, #156]	@ (80008c4 <Buttons_GetState+0xd0>)
  8000828:	613b      	str	r3, [r7, #16]
+    }
+
+    uint8_t state = HAL_GPIO_ReadPin(gpio, pin);
  800082a:	8b7b      	ldrh	r3, [r7, #26]
  800082c:	4619      	mov	r1, r3
  800082e:	69f8      	ldr	r0, [r7, #28]
  8000830:	f002 fe3c 	bl	80034ac <HAL_GPIO_ReadPin>
  8000834:	4603      	mov	r3, r0
  8000836:	73fb      	strb	r3, [r7, #15]
+
+    if(state == GPIO_PIN_RESET){
  8000838:	7bfb      	ldrb	r3, [r7, #15]
  800083a:	2b00      	cmp	r3, #0
  800083c:	d114      	bne.n	8000868 <Buttons_GetState+0x74>
+        if (*tick < 255){
  800083e:	697b      	ldr	r3, [r7, #20]
  8000840:	781b      	ldrb	r3, [r3, #0]
  8000842:	2bff      	cmp	r3, #255	@ 0xff
  8000844:	d005      	beq.n	8000852 <Buttons_GetState+0x5e>
+            (*tick)++; 
  8000846:	697b      	ldr	r3, [r7, #20]
  8000848:	781b      	ldrb	r3, [r3, #0]
  800084a:	3301      	adds	r3, #1
  800084c:	b2da      	uxtb	r2, r3
  800084e:	697b      	ldr	r3, [r7, #20]
  8000850:	701a      	strb	r2, [r3, #0]
+        }
+        *last_tick = 0;
  8000852:	693b      	ldr	r3, [r7, #16]
  8000854:	2200      	movs	r2, #0
  8000856:	701a      	strb	r2, [r3, #0]
+        if (*tick > HOLD_TICKS) {
  8000858:	697b      	ldr	r3, [r7, #20]
  800085a:	781b      	ldrb	r3, [r3, #0]
  800085c:	2b4b      	cmp	r3, #75	@ 0x4b
  800085e:	d901      	bls.n	8000864 <Buttons_GetState+0x70>
+            return BUTTON_HOLD; // удержание (держим)
  8000860:	2303      	movs	r3, #3
  8000862:	e023      	b.n	80008ac <Buttons_GetState+0xb8>
+        }
+        return BUTTON_NONE;
  8000864:	2300      	movs	r3, #0
  8000866:	e021      	b.n	80008ac <Buttons_GetState+0xb8>
+    }else{
+        if(*last_tick == 0){
  8000868:	693b      	ldr	r3, [r7, #16]
  800086a:	781b      	ldrb	r3, [r3, #0]
  800086c:	2b00      	cmp	r3, #0
  800086e:	d119      	bne.n	80008a4 <Buttons_GetState+0xb0>
+            *last_tick = 1;
  8000870:	693b      	ldr	r3, [r7, #16]
  8000872:	2201      	movs	r2, #1
  8000874:	701a      	strb	r2, [r3, #0]
+            if (*tick >= LONG_CLICK) {
  8000876:	697b      	ldr	r3, [r7, #20]
  8000878:	781b      	ldrb	r3, [r3, #0]
  800087a:	2b22      	cmp	r3, #34	@ 0x22
  800087c:	d904      	bls.n	8000888 <Buttons_GetState+0x94>
+                *tick = 0;
  800087e:	697b      	ldr	r3, [r7, #20]
  8000880:	2200      	movs	r2, #0
  8000882:	701a      	strb	r2, [r3, #0]
+                return BUTTON_LONG;
  8000884:	2302      	movs	r3, #2
  8000886:	e011      	b.n	80008ac <Buttons_GetState+0xb8>
+            } 
+            else if (*tick >= SHORT_CLICK) {
  8000888:	697b      	ldr	r3, [r7, #20]
  800088a:	781b      	ldrb	r3, [r3, #0]
  800088c:	2b00      	cmp	r3, #0
  800088e:	d004      	beq.n	800089a <Buttons_GetState+0xa6>
+                *tick = 0;
  8000890:	697b      	ldr	r3, [r7, #20]
  8000892:	2200      	movs	r2, #0
  8000894:	701a      	strb	r2, [r3, #0]
+                return BUTTON_SHORT;
  8000896:	2301      	movs	r3, #1
  8000898:	e008      	b.n	80008ac <Buttons_GetState+0xb8>
+            } 
+            else {
+                *tick = 0;
  800089a:	697b      	ldr	r3, [r7, #20]
  800089c:	2200      	movs	r2, #0
  800089e:	701a      	strb	r2, [r3, #0]
+                return BUTTON_NONE;
  80008a0:	2300      	movs	r3, #0
  80008a2:	e003      	b.n	80008ac <Buttons_GetState+0xb8>
+            }
+        }else{
+            *tick = 0;
  80008a4:	697b      	ldr	r3, [r7, #20]
  80008a6:	2200      	movs	r2, #0
  80008a8:	701a      	strb	r2, [r3, #0]
+            return BUTTON_NONE;
  80008aa:	2300      	movs	r3, #0
+        }
+    }
+}
  80008ac:	4618      	mov	r0, r3
  80008ae:	3720      	adds	r7, #32
  80008b0:	46bd      	mov	sp, r7
@@ -802,15 +870,23 @@ Disassembly of section .text:
  80008c4:	20000001 	.word	0x20000001
 
 080008c8 <Get_Time_Now>:
+
+extern RTC_HandleTypeDef hrtc;
+extern  RTC_TimeTypeDef clkTime;
+const static char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
+
+void Get_Time_Now(char *timeStr, RTC_TimeTypeDef *clkTime){
  80008c8:	b580      	push	{r7, lr}
  80008ca:	b082      	sub	sp, #8
  80008cc:	af00      	add	r7, sp, #0
  80008ce:	6078      	str	r0, [r7, #4]
  80008d0:	6039      	str	r1, [r7, #0]
+		HAL_RTC_GetTime(&hrtc, clkTime, RTC_FORMAT_BIN);
  80008d2:	2200      	movs	r2, #0
  80008d4:	6839      	ldr	r1, [r7, #0]
  80008d6:	4834      	ldr	r0, [pc, #208]	@ (80009a8 <Get_Time_Now+0xe0>)
  80008d8:	f003 fcc8 	bl	800426c <HAL_RTC_GetTime>
+		timeStr[0] = '0' + clkTime->Hours / 10;
  80008dc:	683b      	ldr	r3, [r7, #0]
  80008de:	781b      	ldrb	r3, [r3, #0]
  80008e0:	4a32      	ldr	r2, [pc, #200]	@ (80009ac <Get_Time_Now+0xe4>)
@@ -821,6 +897,7 @@ Disassembly of section .text:
  80008ec:	b2da      	uxtb	r2, r3
  80008ee:	687b      	ldr	r3, [r7, #4]
  80008f0:	701a      	strb	r2, [r3, #0]
+		timeStr[1] = '0' + clkTime->Hours % 10;
  80008f2:	683b      	ldr	r3, [r7, #0]
  80008f4:	781a      	ldrb	r2, [r3, #0]
  80008f6:	4b2d      	ldr	r3, [pc, #180]	@ (80009ac <Get_Time_Now+0xe4>)
@@ -837,10 +914,12 @@ Disassembly of section .text:
  800090e:	3230      	adds	r2, #48	@ 0x30
  8000910:	b2d2      	uxtb	r2, r2
  8000912:	701a      	strb	r2, [r3, #0]
+		timeStr[2] = ':';
  8000914:	687b      	ldr	r3, [r7, #4]
  8000916:	3302      	adds	r3, #2
  8000918:	223a      	movs	r2, #58	@ 0x3a
  800091a:	701a      	strb	r2, [r3, #0]
+		timeStr[3] = '0' + clkTime->Minutes / 10;
  800091c:	683b      	ldr	r3, [r7, #0]
  800091e:	785b      	ldrb	r3, [r3, #1]
  8000920:	4a22      	ldr	r2, [pc, #136]	@ (80009ac <Get_Time_Now+0xe4>)
@@ -852,6 +931,7 @@ Disassembly of section .text:
  800092e:	3230      	adds	r2, #48	@ 0x30
  8000930:	b2d2      	uxtb	r2, r2
  8000932:	701a      	strb	r2, [r3, #0]
+		timeStr[4] = '0' + clkTime->Minutes % 10;
  8000934:	683b      	ldr	r3, [r7, #0]
  8000936:	785a      	ldrb	r2, [r3, #1]
  8000938:	4b1c      	ldr	r3, [pc, #112]	@ (80009ac <Get_Time_Now+0xe4>)
@@ -868,10 +948,12 @@ Disassembly of section .text:
  8000950:	3230      	adds	r2, #48	@ 0x30
  8000952:	b2d2      	uxtb	r2, r2
  8000954:	701a      	strb	r2, [r3, #0]
+		timeStr[5] = ':';
  8000956:	687b      	ldr	r3, [r7, #4]
  8000958:	3305      	adds	r3, #5
  800095a:	223a      	movs	r2, #58	@ 0x3a
  800095c:	701a      	strb	r2, [r3, #0]
+		timeStr[6] = '0' + clkTime->Seconds / 10;
  800095e:	683b      	ldr	r3, [r7, #0]
  8000960:	789b      	ldrb	r3, [r3, #2]
  8000962:	4a12      	ldr	r2, [pc, #72]	@ (80009ac <Get_Time_Now+0xe4>)
@@ -883,6 +965,7 @@ Disassembly of section .text:
  8000970:	3230      	adds	r2, #48	@ 0x30
  8000972:	b2d2      	uxtb	r2, r2
  8000974:	701a      	strb	r2, [r3, #0]
+		timeStr[7] = '0' + clkTime->Seconds % 10;
  8000976:	683b      	ldr	r3, [r7, #0]
  8000978:	789a      	ldrb	r2, [r3, #2]
  800097a:	4b0c      	ldr	r3, [pc, #48]	@ (80009ac <Get_Time_Now+0xe4>)
@@ -899,10 +982,12 @@ Disassembly of section .text:
  8000992:	3230      	adds	r2, #48	@ 0x30
  8000994:	b2d2      	uxtb	r2, r2
  8000996:	701a      	strb	r2, [r3, #0]
+		timeStr[8] = '\0';
  8000998:	687b      	ldr	r3, [r7, #4]
  800099a:	3308      	adds	r3, #8
  800099c:	2200      	movs	r2, #0
  800099e:	701a      	strb	r2, [r3, #0]
+}
  80009a0:	bf00      	nop
  80009a2:	3708      	adds	r7, #8
  80009a4:	46bd      	mov	sp, r7
@@ -911,6 +996,8 @@ Disassembly of section .text:
  80009ac:	cccccccd 	.word	0xcccccccd
 
 080009b0 <Get_Date_Now>:
+
+void Get_Date_Now(char *dateStr, uint8_t format, RTC_DateTypeDef *clkDate){
  80009b0:	b580      	push	{r7, lr}
  80009b2:	b086      	sub	sp, #24
  80009b4:	af00      	add	r7, sp, #0
@@ -918,25 +1005,33 @@ Disassembly of section .text:
  80009b8:	460b      	mov	r3, r1
  80009ba:	607a      	str	r2, [r7, #4]
  80009bc:	72fb      	strb	r3, [r7, #11]
+	HAL_RTC_GetDate(&hrtc, clkDate, RTC_FORMAT_BIN);
  80009be:	2200      	movs	r2, #0
  80009c0:	6879      	ldr	r1, [r7, #4]
  80009c2:	4869      	ldr	r0, [pc, #420]	@ (8000b68 <Get_Date_Now+0x1b8>)
  80009c4:	f003 fde0 	bl	8004588 <HAL_RTC_GetDate>
+
+
+		uint8_t pos = 0;
  80009c8:	2300      	movs	r3, #0
  80009ca:	75fb      	strb	r3, [r7, #23]
+		if(format >> 0 & 1){
  80009cc:	7afb      	ldrb	r3, [r7, #11]
  80009ce:	f003 0301 	and.w	r3, r3, #1
  80009d2:	2b00      	cmp	r3, #0
  80009d4:	d022      	beq.n	8000a1c <Get_Date_Now+0x6c>
+			const char *day = weekDays[clkDate->WeekDay];
  80009d6:	687b      	ldr	r3, [r7, #4]
  80009d8:	781b      	ldrb	r3, [r3, #0]
  80009da:	461a      	mov	r2, r3
  80009dc:	4b63      	ldr	r3, [pc, #396]	@ (8000b6c <Get_Date_Now+0x1bc>)
  80009de:	f853 3022 	ldr.w	r3, [r3, r2, lsl #2]
  80009e2:	613b      	str	r3, [r7, #16]
+	        for(uint8_t i = 0; i < 3; i++){
  80009e4:	2300      	movs	r3, #0
  80009e6:	75bb      	strb	r3, [r7, #22]
  80009e8:	e00d      	b.n	8000a06 <Get_Date_Now+0x56>
+	        	dateStr[pos++] = day[i];
  80009ea:	7dbb      	ldrb	r3, [r7, #22]
  80009ec:	693a      	ldr	r2, [r7, #16]
  80009ee:	441a      	add	r2, r3
@@ -948,12 +1043,15 @@ Disassembly of section .text:
  80009fa:	440b      	add	r3, r1
  80009fc:	7812      	ldrb	r2, [r2, #0]
  80009fe:	701a      	strb	r2, [r3, #0]
+	        for(uint8_t i = 0; i < 3; i++){
  8000a00:	7dbb      	ldrb	r3, [r7, #22]
  8000a02:	3301      	adds	r3, #1
  8000a04:	75bb      	strb	r3, [r7, #22]
  8000a06:	7dbb      	ldrb	r3, [r7, #22]
  8000a08:	2b02      	cmp	r3, #2
  8000a0a:	d9ee      	bls.n	80009ea <Get_Date_Now+0x3a>
+	        }
+			dateStr[pos++] = ' ';
  8000a0c:	7dfb      	ldrb	r3, [r7, #23]
  8000a0e:	1c5a      	adds	r2, r3, #1
  8000a10:	75fa      	strb	r2, [r7, #23]
@@ -962,12 +1060,16 @@ Disassembly of section .text:
  8000a16:	4413      	add	r3, r2
  8000a18:	2220      	movs	r2, #32
  8000a1a:	701a      	strb	r2, [r3, #0]
+		}
+
+		if(format >> 1 & 1){
  8000a1c:	7afb      	ldrb	r3, [r7, #11]
  8000a1e:	085b      	lsrs	r3, r3, #1
  8000a20:	b2db      	uxtb	r3, r3
  8000a22:	f003 0301 	and.w	r3, r3, #1
  8000a26:	2b00      	cmp	r3, #0
  8000a28:	d02c      	beq.n	8000a84 <Get_Date_Now+0xd4>
+			dateStr[pos++] = '0' + clkDate->Date / 10;
  8000a2a:	687b      	ldr	r3, [r7, #4]
  8000a2c:	789b      	ldrb	r3, [r3, #2]
  8000a2e:	4a50      	ldr	r2, [pc, #320]	@ (8000b70 <Get_Date_Now+0x1c0>)
@@ -983,6 +1085,7 @@ Disassembly of section .text:
  8000a44:	3230      	adds	r2, #48	@ 0x30
  8000a46:	b2d2      	uxtb	r2, r2
  8000a48:	701a      	strb	r2, [r3, #0]
+			dateStr[pos++] = '0' + clkDate->Date % 10;
  8000a4a:	687b      	ldr	r3, [r7, #4]
  8000a4c:	789a      	ldrb	r2, [r3, #2]
  8000a4e:	4b48      	ldr	r3, [pc, #288]	@ (8000b70 <Get_Date_Now+0x1c0>)
@@ -1003,6 +1106,7 @@ Disassembly of section .text:
  8000a6e:	3230      	adds	r2, #48	@ 0x30
  8000a70:	b2d2      	uxtb	r2, r2
  8000a72:	701a      	strb	r2, [r3, #0]
+			dateStr[pos++] = '.';
  8000a74:	7dfb      	ldrb	r3, [r7, #23]
  8000a76:	1c5a      	adds	r2, r3, #1
  8000a78:	75fa      	strb	r2, [r7, #23]
@@ -1011,12 +1115,16 @@ Disassembly of section .text:
  8000a7e:	4413      	add	r3, r2
  8000a80:	222e      	movs	r2, #46	@ 0x2e
  8000a82:	701a      	strb	r2, [r3, #0]
+		}
+
+		if(format >> 2 & 1){
  8000a84:	7afb      	ldrb	r3, [r7, #11]
  8000a86:	089b      	lsrs	r3, r3, #2
  8000a88:	b2db      	uxtb	r3, r3
  8000a8a:	f003 0301 	and.w	r3, r3, #1
  8000a8e:	2b00      	cmp	r3, #0
  8000a90:	d02c      	beq.n	8000aec <Get_Date_Now+0x13c>
+			dateStr[pos++] = '0' + clkDate->Month / 10;
  8000a92:	687b      	ldr	r3, [r7, #4]
  8000a94:	785b      	ldrb	r3, [r3, #1]
  8000a96:	4a36      	ldr	r2, [pc, #216]	@ (8000b70 <Get_Date_Now+0x1c0>)
@@ -1032,6 +1140,7 @@ Disassembly of section .text:
  8000aac:	3230      	adds	r2, #48	@ 0x30
  8000aae:	b2d2      	uxtb	r2, r2
  8000ab0:	701a      	strb	r2, [r3, #0]
+			dateStr[pos++] = '0' + clkDate->Month % 10;
  8000ab2:	687b      	ldr	r3, [r7, #4]
  8000ab4:	785a      	ldrb	r2, [r3, #1]
  8000ab6:	4b2e      	ldr	r3, [pc, #184]	@ (8000b70 <Get_Date_Now+0x1c0>)
@@ -1052,6 +1161,7 @@ Disassembly of section .text:
  8000ad6:	3230      	adds	r2, #48	@ 0x30
  8000ad8:	b2d2      	uxtb	r2, r2
  8000ada:	701a      	strb	r2, [r3, #0]
+			dateStr[pos++] = '.';
  8000adc:	7dfb      	ldrb	r3, [r7, #23]
  8000ade:	1c5a      	adds	r2, r3, #1
  8000ae0:	75fa      	strb	r2, [r7, #23]
@@ -1060,12 +1170,16 @@ Disassembly of section .text:
  8000ae6:	4413      	add	r3, r2
  8000ae8:	222e      	movs	r2, #46	@ 0x2e
  8000aea:	701a      	strb	r2, [r3, #0]
+		}
+
+		if(format >> 3 & 1){
  8000aec:	7afb      	ldrb	r3, [r7, #11]
  8000aee:	08db      	lsrs	r3, r3, #3
  8000af0:	b2db      	uxtb	r3, r3
  8000af2:	f003 0301 	and.w	r3, r3, #1
  8000af6:	2b00      	cmp	r3, #0
  8000af8:	d02c      	beq.n	8000b54 <Get_Date_Now+0x1a4>
+			dateStr[pos++] = '0' + clkDate->Year / 10;
  8000afa:	687b      	ldr	r3, [r7, #4]
  8000afc:	78db      	ldrb	r3, [r3, #3]
  8000afe:	4a1c      	ldr	r2, [pc, #112]	@ (8000b70 <Get_Date_Now+0x1c0>)
@@ -1081,6 +1195,7 @@ Disassembly of section .text:
  8000b14:	3230      	adds	r2, #48	@ 0x30
  8000b16:	b2d2      	uxtb	r2, r2
  8000b18:	701a      	strb	r2, [r3, #0]
+			dateStr[pos++] = '0' + clkDate->Year % 10;
  8000b1a:	687b      	ldr	r3, [r7, #4]
  8000b1c:	78da      	ldrb	r2, [r3, #3]
  8000b1e:	4b14      	ldr	r3, [pc, #80]	@ (8000b70 <Get_Date_Now+0x1c0>)
@@ -1101,6 +1216,7 @@ Disassembly of section .text:
  8000b3e:	3230      	adds	r2, #48	@ 0x30
  8000b40:	b2d2      	uxtb	r2, r2
  8000b42:	701a      	strb	r2, [r3, #0]
+			dateStr[pos++] = '.';
  8000b44:	7dfb      	ldrb	r3, [r7, #23]
  8000b46:	1c5a      	adds	r2, r3, #1
  8000b48:	75fa      	strb	r2, [r7, #23]
@@ -1109,12 +1225,17 @@ Disassembly of section .text:
  8000b4e:	4413      	add	r3, r2
  8000b50:	222e      	movs	r2, #46	@ 0x2e
  8000b52:	701a      	strb	r2, [r3, #0]
+		}
+
+
+		dateStr[pos-1] = '\0';
  8000b54:	7dfb      	ldrb	r3, [r7, #23]
  8000b56:	3b01      	subs	r3, #1
  8000b58:	68fa      	ldr	r2, [r7, #12]
  8000b5a:	4413      	add	r3, r2
  8000b5c:	2200      	movs	r2, #0
  8000b5e:	701a      	strb	r2, [r3, #0]
+}
  8000b60:	bf00      	nop
  8000b62:	3718      	adds	r7, #24
  8000b64:	46bd      	mov	sp, r7
@@ -1124,6 +1245,8 @@ Disassembly of section .text:
  8000b70:	cccccccd 	.word	0xcccccccd
 
 08000b74 <Update_RTCTime>:
+
+void Update_RTCTime(uint8_t h, uint8_t m, uint8_t s){
  8000b74:	b580      	push	{r7, lr}
  8000b76:	b082      	sub	sp, #8
  8000b78:	af00      	add	r7, sp, #0
@@ -1133,30 +1256,39 @@ Disassembly of section .text:
  8000b80:	71bb      	strb	r3, [r7, #6]
  8000b82:	4613      	mov	r3, r2
  8000b84:	717b      	strb	r3, [r7, #5]
+	if(h > 23) h = 0;
  8000b86:	79fb      	ldrb	r3, [r7, #7]
  8000b88:	2b17      	cmp	r3, #23
  8000b8a:	d901      	bls.n	8000b90 <Update_RTCTime+0x1c>
  8000b8c:	2300      	movs	r3, #0
  8000b8e:	71fb      	strb	r3, [r7, #7]
+	if(m > 59) m = 0;
  8000b90:	79bb      	ldrb	r3, [r7, #6]
  8000b92:	2b3b      	cmp	r3, #59	@ 0x3b
  8000b94:	d901      	bls.n	8000b9a <Update_RTCTime+0x26>
  8000b96:	2300      	movs	r3, #0
  8000b98:	71bb      	strb	r3, [r7, #6]
+	if(s > 59) s = 0;
  8000b9a:	797b      	ldrb	r3, [r7, #5]
  8000b9c:	2b3b      	cmp	r3, #59	@ 0x3b
  8000b9e:	d901      	bls.n	8000ba4 <Update_RTCTime+0x30>
  8000ba0:	2300      	movs	r3, #0
  8000ba2:	717b      	strb	r3, [r7, #5]
+
+	clkTime.Hours = h;
  8000ba4:	4a0b      	ldr	r2, [pc, #44]	@ (8000bd4 <Update_RTCTime+0x60>)
  8000ba6:	79fb      	ldrb	r3, [r7, #7]
  8000ba8:	7013      	strb	r3, [r2, #0]
+	clkTime.Minutes = m;
  8000baa:	4a0a      	ldr	r2, [pc, #40]	@ (8000bd4 <Update_RTCTime+0x60>)
  8000bac:	79bb      	ldrb	r3, [r7, #6]
  8000bae:	7053      	strb	r3, [r2, #1]
+	clkTime.Seconds = s;
  8000bb0:	4a08      	ldr	r2, [pc, #32]	@ (8000bd4 <Update_RTCTime+0x60>)
  8000bb2:	797b      	ldrb	r3, [r7, #5]
  8000bb4:	7093      	strb	r3, [r2, #2]
+
+	if (HAL_RTC_SetTime(&hrtc, &clkTime, RTC_FORMAT_BIN) != HAL_OK)
  8000bb6:	2200      	movs	r2, #0
  8000bb8:	4906      	ldr	r1, [pc, #24]	@ (8000bd4 <Update_RTCTime+0x60>)
  8000bba:	4807      	ldr	r0, [pc, #28]	@ (8000bd8 <Update_RTCTime+0x64>)
@@ -1164,7 +1296,10 @@ Disassembly of section .text:
  8000bc0:	4603      	mov	r3, r0
  8000bc2:	2b00      	cmp	r3, #0
  8000bc4:	d001      	beq.n	8000bca <Update_RTCTime+0x56>
+	{
+	  Error_Handler();
  8000bc6:	f000 ff91 	bl	8001aec <Error_Handler>
+	}
  8000bca:	bf00      	nop
  8000bcc:	3708      	adds	r7, #8
  8000bce:	46bd      	mov	sp, r7
@@ -1174,11 +1309,18 @@ Disassembly of section .text:
  8000bd8:	2000093c 	.word	0x2000093c
 
 08000bdc <Thermistor_CalcTempC>:
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+#include "Thermistor.h"
+
+float Thermistor_CalcTempC(uint16_t adcValue){
  8000bdc:	b590      	push	{r4, r7, lr}
  8000bde:	b085      	sub	sp, #20
  8000be0:	af00      	add	r7, sp, #0
  8000be2:	4603      	mov	r3, r0
  8000be4:	80fb      	strh	r3, [r7, #6]
+	  if (adcValue > 0 && adcValue < ADC_MAX)
  8000be6:	88fb      	ldrh	r3, [r7, #6]
  8000be8:	2b00      	cmp	r3, #0
  8000bea:	d04f      	beq.n	8000c8c <Thermistor_CalcTempC+0xb0>
@@ -1192,11 +1334,14 @@ Disassembly of section .text:
  8000bfe:	4603      	mov	r3, r0
  8000c00:	2b00      	cmp	r3, #0
  8000c02:	d043      	beq.n	8000c8c <Thermistor_CalcTempC+0xb0>
+	  {
+		  float adc = (float)adcValue;
  8000c04:	88fb      	ldrh	r3, [r7, #6]
  8000c06:	4618      	mov	r0, r3
  8000c08:	f7ff fb56 	bl	80002b8 <__aeabi_ui2f>
  8000c0c:	4603      	mov	r3, r0
  8000c0e:	60fb      	str	r3, [r7, #12]
+		  float Ntc_log = logf(R_FIXED * (adc / (ADC_MAX - adc)));
  8000c10:	68f9      	ldr	r1, [r7, #12]
  8000c12:	4821      	ldr	r0, [pc, #132]	@ (8000c98 <Thermistor_CalcTempC+0xbc>)
  8000c14:	f7ff fa9e 	bl	8000154 <__aeabi_fsub>
@@ -1212,6 +1357,7 @@ Disassembly of section .text:
  8000c2e:	4618      	mov	r0, r3
  8000c30:	f004 fb06 	bl	8005240 <logf>
  8000c34:	60b8      	str	r0, [r7, #8]
+		  return (1.0f / (A + B*Ntc_log + C*Ntc_log*Ntc_log*Ntc_log)) - 273.15f;
  8000c36:	491a      	ldr	r1, [pc, #104]	@ (8000ca0 <Thermistor_CalcTempC+0xc4>)
  8000c38:	68b8      	ldr	r0, [r7, #8]
  8000c3a:	f7ff fb95 	bl	8000368 <__aeabi_fmul>
@@ -1246,7 +1392,14 @@ Disassembly of section .text:
  8000c84:	f7ff fa66 	bl	8000154 <__aeabi_fsub>
  8000c88:	4603      	mov	r3, r0
  8000c8a:	e001      	b.n	8000c90 <Thermistor_CalcTempC+0xb4>
+	  }
+	  else
+	  {
+	      return 0;
  8000c8c:	f04f 0300 	mov.w	r3, #0
+	  }
+
+}
  8000c90:	4618      	mov	r0, r3
  8000c92:	3714      	adds	r7, #20
  8000c94:	46bd      	mov	sp, r7
@@ -1259,18 +1412,24 @@ Disassembly of section .text:
  8000cac:	43889333 	.word	0x43889333
 
 08000cb0 <Thermistor_strCalcTempC>:
+
+void Thermistor_strCalcTempC(char *buf, uint16_t adcValu){
  8000cb0:	b580      	push	{r7, lr}
  8000cb2:	b086      	sub	sp, #24
  8000cb4:	af00      	add	r7, sp, #0
  8000cb6:	6078      	str	r0, [r7, #4]
  8000cb8:	460b      	mov	r3, r1
  8000cba:	807b      	strh	r3, [r7, #2]
+	float temp = Thermistor_CalcTempC(adcValu);
  8000cbc:	887b      	ldrh	r3, [r7, #2]
  8000cbe:	4618      	mov	r0, r3
  8000cc0:	f7ff ff8c 	bl	8000bdc <Thermistor_CalcTempC>
  8000cc4:	6178      	str	r0, [r7, #20]
+	char *p = buf;
  8000cc6:	687b      	ldr	r3, [r7, #4]
  8000cc8:	613b      	str	r3, [r7, #16]
+
+	if (temp > 0) *p++ = '+';
  8000cca:	f04f 0100 	mov.w	r1, #0
  8000cce:	6978      	ldr	r0, [r7, #20]
  8000cd0:	f7ff fd06 	bl	80006e0 <__aeabi_fcmpgt>
@@ -1283,24 +1442,31 @@ Disassembly of section .text:
  8000ce0:	222b      	movs	r2, #43	@ 0x2b
  8000ce2:	701a      	strb	r2, [r3, #0]
  8000ce4:	e010      	b.n	8000d08 <Thermistor_strCalcTempC+0x58>
+    else if (temp < 0) {
  8000ce6:	f04f 0100 	mov.w	r1, #0
  8000cea:	6978      	ldr	r0, [r7, #20]
  8000cec:	f7ff fcda 	bl	80006a4 <__aeabi_fcmplt>
  8000cf0:	4603      	mov	r3, r0
  8000cf2:	2b00      	cmp	r3, #0
  8000cf4:	d008      	beq.n	8000d08 <Thermistor_strCalcTempC+0x58>
+    	*p++ = '-';
  8000cf6:	693b      	ldr	r3, [r7, #16]
  8000cf8:	1c5a      	adds	r2, r3, #1
  8000cfa:	613a      	str	r2, [r7, #16]
  8000cfc:	222d      	movs	r2, #45	@ 0x2d
  8000cfe:	701a      	strb	r2, [r3, #0]
+    	temp = -temp;
  8000d00:	697b      	ldr	r3, [r7, #20]
  8000d02:	f083 4300 	eor.w	r3, r3, #2147483648	@ 0x80000000
  8000d06:	617b      	str	r3, [r7, #20]
+    }
+
+	uint16_t whole = (uint16_t)temp;
  8000d08:	6978      	ldr	r0, [r7, #20]
  8000d0a:	f7ff fd09 	bl	8000720 <__aeabi_f2uiz>
  8000d0e:	4603      	mov	r3, r0
  8000d10:	81fb      	strh	r3, [r7, #14]
+	uint16_t frac = (uint16_t)((temp-(float)whole)*10.1f);
  8000d12:	89fb      	ldrh	r3, [r7, #14]
  8000d14:	4618      	mov	r0, r3
  8000d16:	f7ff facf 	bl	80002b8 <__aeabi_ui2f>
@@ -1317,22 +1483,31 @@ Disassembly of section .text:
  8000d32:	f7ff fcf5 	bl	8000720 <__aeabi_f2uiz>
  8000d36:	4603      	mov	r3, r0
  8000d38:	817b      	strh	r3, [r7, #10]
+
+	uint16_t div = 1;
  8000d3a:	2301      	movs	r3, #1
  8000d3c:	81bb      	strh	r3, [r7, #12]
+	while (whole/div >= 10) {
  8000d3e:	e005      	b.n	8000d4c <Thermistor_strCalcTempC+0x9c>
+        div *= 10;
  8000d40:	89bb      	ldrh	r3, [r7, #12]
  8000d42:	461a      	mov	r2, r3
  8000d44:	0092      	lsls	r2, r2, #2
  8000d46:	4413      	add	r3, r2
  8000d48:	005b      	lsls	r3, r3, #1
  8000d4a:	81bb      	strh	r3, [r7, #12]
+	while (whole/div >= 10) {
  8000d4c:	89fa      	ldrh	r2, [r7, #14]
  8000d4e:	89bb      	ldrh	r3, [r7, #12]
  8000d50:	fbb2 f3f3 	udiv	r3, r2, r3
  8000d54:	b29b      	uxth	r3, r3
  8000d56:	2b09      	cmp	r3, #9
  8000d58:	d8f2      	bhi.n	8000d40 <Thermistor_strCalcTempC+0x90>
+	}
+
+    while (div > 0){
  8000d5a:	e019      	b.n	8000d90 <Thermistor_strCalcTempC+0xe0>
+    	*p++ = whole / div + '0';
  8000d5c:	89fa      	ldrh	r2, [r7, #14]
  8000d5e:	89bb      	ldrh	r3, [r7, #12]
  8000d60:	fbb2 f3f3 	udiv	r3, r2, r3
@@ -1344,25 +1519,32 @@ Disassembly of section .text:
  8000d6e:	3230      	adds	r2, #48	@ 0x30
  8000d70:	b2d2      	uxtb	r2, r2
  8000d72:	701a      	strb	r2, [r3, #0]
+    	whole %= div;
  8000d74:	89fb      	ldrh	r3, [r7, #14]
  8000d76:	89ba      	ldrh	r2, [r7, #12]
  8000d78:	fbb3 f1f2 	udiv	r1, r3, r2
  8000d7c:	fb01 f202 	mul.w	r2, r1, r2
  8000d80:	1a9b      	subs	r3, r3, r2
  8000d82:	81fb      	strh	r3, [r7, #14]
+    	div /= 10;
  8000d84:	89bb      	ldrh	r3, [r7, #12]
  8000d86:	4a10      	ldr	r2, [pc, #64]	@ (8000dc8 <Thermistor_strCalcTempC+0x118>)
  8000d88:	fba2 2303 	umull	r2, r3, r2, r3
  8000d8c:	08db      	lsrs	r3, r3, #3
  8000d8e:	81bb      	strh	r3, [r7, #12]
+    while (div > 0){
  8000d90:	89bb      	ldrh	r3, [r7, #12]
  8000d92:	2b00      	cmp	r3, #0
  8000d94:	d1e2      	bne.n	8000d5c <Thermistor_strCalcTempC+0xac>
+    }
+
+    *p++ = '.';
  8000d96:	693b      	ldr	r3, [r7, #16]
  8000d98:	1c5a      	adds	r2, r3, #1
  8000d9a:	613a      	str	r2, [r7, #16]
  8000d9c:	222e      	movs	r2, #46	@ 0x2e
  8000d9e:	701a      	strb	r2, [r3, #0]
+    *p++ = frac + '0';
  8000da0:	897b      	ldrh	r3, [r7, #10]
  8000da2:	b2da      	uxtb	r2, r3
  8000da4:	693b      	ldr	r3, [r7, #16]
@@ -1371,11 +1553,14 @@ Disassembly of section .text:
  8000daa:	3230      	adds	r2, #48	@ 0x30
  8000dac:	b2d2      	uxtb	r2, r2
  8000dae:	701a      	strb	r2, [r3, #0]
+    *p++ = '\0';
  8000db0:	693b      	ldr	r3, [r7, #16]
  8000db2:	1c5a      	adds	r2, r3, #1
  8000db4:	613a      	str	r2, [r7, #16]
  8000db6:	2200      	movs	r2, #0
  8000db8:	701a      	strb	r2, [r3, #0]
+
+}
  8000dba:	bf00      	nop
  8000dbc:	3718      	adds	r7, #24
  8000dbe:	46bd      	mov	sp, r7
@@ -1385,17 +1570,26 @@ Disassembly of section .text:
  8000dc8:	cccccccd 	.word	0xcccccccd
 
 08000dcc <UI_Init>:
+extern RTC_DateTypeDef clkDate;
+
+/*
+ *  Initialize UI system
+*/
+void UI_Init(){
  8000dcc:	b580      	push	{r7, lr}
  8000dce:	af00      	add	r7, sp, #0
+    Get_Time_Now(timeStr, &clkTime);
  8000dd0:	4906      	ldr	r1, [pc, #24]	@ (8000dec <UI_Init+0x20>)
  8000dd2:	4807      	ldr	r0, [pc, #28]	@ (8000df0 <UI_Init+0x24>)
  8000dd4:	f7ff fd78 	bl	80008c8 <Get_Time_Now>
+    Get_Date_Now(dateStr, dataFormat, &clkDate);
  8000dd8:	4b06      	ldr	r3, [pc, #24]	@ (8000df4 <UI_Init+0x28>)
  8000dda:	781b      	ldrb	r3, [r3, #0]
  8000ddc:	4a06      	ldr	r2, [pc, #24]	@ (8000df8 <UI_Init+0x2c>)
  8000dde:	4619      	mov	r1, r3
  8000de0:	4806      	ldr	r0, [pc, #24]	@ (8000dfc <UI_Init+0x30>)
  8000de2:	f7ff fde5 	bl	80009b0 <Get_Date_Now>
+}
  8000de6:	bf00      	nop
  8000de8:	bd80      	pop	{r7, pc}
  8000dea:	bf00      	nop
@@ -1406,34 +1600,51 @@ Disassembly of section .text:
  8000dfc:	200004d8 	.word	0x200004d8
 
 08000e00 <UI_Update>:
+
+void UI_Update(){
  8000e00:	b580      	push	{r7, lr}
  8000e02:	b082      	sub	sp, #8
  8000e04:	af00      	add	r7, sp, #0
+
+//============BUTTONS_BEGIN============//
+    ButtonStatus_t btnup_status = Buttons_GetState(BUTTON_UP);
  8000e06:	2000      	movs	r0, #0
  8000e08:	f7ff fcf4 	bl	80007f4 <Buttons_GetState>
  8000e0c:	4603      	mov	r3, r0
  8000e0e:	71bb      	strb	r3, [r7, #6]
+    ButtonStatus_t btndown_status = Buttons_GetState(BUTTON_DOWN);
  8000e10:	2001      	movs	r0, #1
  8000e12:	f7ff fcef 	bl	80007f4 <Buttons_GetState>
  8000e16:	4603      	mov	r3, r0
  8000e18:	717b      	strb	r3, [r7, #5]
+
+    if(currentScreen == MAIN_VIEW){
  8000e1a:	4b90      	ldr	r3, [pc, #576]	@ (800105c <UI_Update+0x25c>)
  8000e1c:	781b      	ldrb	r3, [r3, #0]
  8000e1e:	2b0a      	cmp	r3, #10
  8000e20:	d127      	bne.n	8000e72 <UI_Update+0x72>
+        //OFF/ON LIGHT
+        //Handle LCD backlight control
+    	if(btnup_status == BUTTON_HOLD){
  8000e22:	79bb      	ldrb	r3, [r7, #6]
  8000e24:	2b03      	cmp	r3, #3
  8000e26:	d103      	bne.n	8000e30 <UI_Update+0x30>
+    		is_lcd_led_on = 1;//Long press turns backlight ON permanently
  8000e28:	4b8d      	ldr	r3, [pc, #564]	@ (8001060 <UI_Update+0x260>)
  8000e2a:	2201      	movs	r2, #1
  8000e2c:	701a      	strb	r2, [r3, #0]
  8000e2e:	e005      	b.n	8000e3c <UI_Update+0x3c>
+    	}else if (btnup_status == BUTTON_SHORT){
  8000e30:	79bb      	ldrb	r3, [r7, #6]
  8000e32:	2b01      	cmp	r3, #1
  8000e34:	d102      	bne.n	8000e3c <UI_Update+0x3c>
+    		is_lcd_led_on = 0;//Short press turns backlight OFF
  8000e36:	4b8a      	ldr	r3, [pc, #552]	@ (8001060 <UI_Update+0x260>)
  8000e38:	2200      	movs	r2, #0
  8000e3a:	701a      	strb	r2, [r3, #0]
+    	}
+        //Update the backlight pin
+    	if(btnup_status == BUTTON_HOLD || is_lcd_led_on){
  8000e3c:	79bb      	ldrb	r3, [r7, #6]
  8000e3e:	2b03      	cmp	r3, #3
  8000e40:	d003      	beq.n	8000e4a <UI_Update+0x4a>
@@ -1441,32 +1652,43 @@ Disassembly of section .text:
  8000e44:	781b      	ldrb	r3, [r3, #0]
  8000e46:	2b00      	cmp	r3, #0
  8000e48:	d006      	beq.n	8000e58 <UI_Update+0x58>
+    		HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_SET);
  8000e4a:	2201      	movs	r2, #1
  8000e4c:	f44f 6100 	mov.w	r1, #2048	@ 0x800
  8000e50:	4884      	ldr	r0, [pc, #528]	@ (8001064 <UI_Update+0x264>)
  8000e52:	f002 fb42 	bl	80034da <HAL_GPIO_WritePin>
  8000e56:	e005      	b.n	8000e64 <UI_Update+0x64>
+    	}else{
+    		HAL_GPIO_WritePin(LCD_LED_GPIO_Port, LCD_LED_Pin, GPIO_PIN_RESET);
  8000e58:	2200      	movs	r2, #0
  8000e5a:	f44f 6100 	mov.w	r1, #2048	@ 0x800
  8000e5e:	4881      	ldr	r0, [pc, #516]	@ (8001064 <UI_Update+0x264>)
  8000e60:	f002 fb3b 	bl	80034da <HAL_GPIO_WritePin>
+    	}
+        //Open menu on DOWN short press
+        if(btndown_status == BUTTON_SHORT){
  8000e64:	797b      	ldrb	r3, [r7, #5]
  8000e66:	2b01      	cmp	r3, #1
  8000e68:	d168      	bne.n	8000f3c <UI_Update+0x13c>
+            currentScreen = MENU_VIEW;
  8000e6a:	4b7c      	ldr	r3, [pc, #496]	@ (800105c <UI_Update+0x25c>)
  8000e6c:	220b      	movs	r2, #11
  8000e6e:	701a      	strb	r2, [r3, #0]
  8000e70:	e064      	b.n	8000f3c <UI_Update+0x13c>
+        }
+    }else if(currentScreen == MENU_VIEW){
  8000e72:	4b7a      	ldr	r3, [pc, #488]	@ (800105c <UI_Update+0x25c>)
  8000e74:	781b      	ldrb	r3, [r3, #0]
  8000e76:	2b0b      	cmp	r3, #11
  8000e78:	d160      	bne.n	8000f3c <UI_Update+0x13c>
+        if (btnup_status == BUTTON_LONG || btnup_status  == BUTTON_HOLD){
  8000e7a:	79bb      	ldrb	r3, [r7, #6]
  8000e7c:	2b02      	cmp	r3, #2
  8000e7e:	d002      	beq.n	8000e86 <UI_Update+0x86>
  8000e80:	79bb      	ldrb	r3, [r7, #6]
  8000e82:	2b03      	cmp	r3, #3
  8000e84:	d10e      	bne.n	8000ea4 <UI_Update+0xa4>
+            currentScreen = list_menu[currentMenuIndex].menuId;
  8000e86:	4b78      	ldr	r3, [pc, #480]	@ (8001068 <UI_Update+0x268>)
  8000e88:	781b      	ldrb	r3, [r3, #0]
  8000e8a:	4a78      	ldr	r2, [pc, #480]	@ (800106c <UI_Update+0x26c>)
@@ -1475,21 +1697,32 @@ Disassembly of section .text:
  8000e90:	791a      	ldrb	r2, [r3, #4]
  8000e92:	4b72      	ldr	r3, [pc, #456]	@ (800105c <UI_Update+0x25c>)
  8000e94:	701a      	strb	r2, [r3, #0]
+            if(currentScreen == UI_SET_TIME){
  8000e96:	4b71      	ldr	r3, [pc, #452]	@ (800105c <UI_Update+0x25c>)
  8000e98:	781b      	ldrb	r3, [r3, #0]
  8000e9a:	2bb0      	cmp	r3, #176	@ 0xb0
  8000e9c:	d108      	bne.n	8000eb0 <UI_Update+0xb0>
+                UI_Time_Init();
  8000e9e:	f000 ffdb 	bl	8001e58 <UI_Time_Init>
+            if(currentScreen == UI_SET_TIME){
  8000ea2:	e005      	b.n	8000eb0 <UI_Update+0xb0>
+            }
+        }else if(btndown_status == BUTTON_LONG){
  8000ea4:	797b      	ldrb	r3, [r7, #5]
  8000ea6:	2b02      	cmp	r3, #2
  8000ea8:	d102      	bne.n	8000eb0 <UI_Update+0xb0>
+            currentScreen = MAIN_VIEW;//GO BACK
  8000eaa:	4b6c      	ldr	r3, [pc, #432]	@ (800105c <UI_Update+0x25c>)
  8000eac:	220a      	movs	r2, #10
  8000eae:	701a      	strb	r2, [r3, #0]
+        }
+        
+
+        if(btnup_status == BUTTON_SHORT){
  8000eb0:	79bb      	ldrb	r3, [r7, #6]
  8000eb2:	2b01      	cmp	r3, #1
  8000eb4:	d11f      	bne.n	8000ef6 <UI_Update+0xf6>
+            list_menu[currentMenuIndex].isSelect = 0;
  8000eb6:	4b6c      	ldr	r3, [pc, #432]	@ (8001068 <UI_Update+0x268>)
  8000eb8:	781b      	ldrb	r3, [r3, #0]
  8000eba:	4a6c      	ldr	r2, [pc, #432]	@ (800106c <UI_Update+0x26c>)
@@ -1497,10 +1730,12 @@ Disassembly of section .text:
  8000ebe:	4413      	add	r3, r2
  8000ec0:	2200      	movs	r2, #0
  8000ec2:	715a      	strb	r2, [r3, #5]
+            if(currentMenuIndex == 0){
  8000ec4:	4b68      	ldr	r3, [pc, #416]	@ (8001068 <UI_Update+0x268>)
  8000ec6:	781b      	ldrb	r3, [r3, #0]
  8000ec8:	2b00      	cmp	r3, #0
  8000eca:	d106      	bne.n	8000eda <UI_Update+0xda>
+                currentMenuIndex = menuSize-1;
  8000ecc:	4b68      	ldr	r3, [pc, #416]	@ (8001070 <UI_Update+0x270>)
  8000ece:	781b      	ldrb	r3, [r3, #0]
  8000ed0:	3b01      	subs	r3, #1
@@ -1508,12 +1743,16 @@ Disassembly of section .text:
  8000ed4:	4b64      	ldr	r3, [pc, #400]	@ (8001068 <UI_Update+0x268>)
  8000ed6:	701a      	strb	r2, [r3, #0]
  8000ed8:	e005      	b.n	8000ee6 <UI_Update+0xe6>
+            }else{
+                currentMenuIndex--;
  8000eda:	4b63      	ldr	r3, [pc, #396]	@ (8001068 <UI_Update+0x268>)
  8000edc:	781b      	ldrb	r3, [r3, #0]
  8000ede:	3b01      	subs	r3, #1
  8000ee0:	b2da      	uxtb	r2, r3
  8000ee2:	4b61      	ldr	r3, [pc, #388]	@ (8001068 <UI_Update+0x268>)
  8000ee4:	701a      	strb	r2, [r3, #0]
+            }
+            list_menu[currentMenuIndex].isSelect = 1;
  8000ee6:	4b60      	ldr	r3, [pc, #384]	@ (8001068 <UI_Update+0x268>)
  8000ee8:	781b      	ldrb	r3, [r3, #0]
  8000eea:	4a60      	ldr	r2, [pc, #384]	@ (800106c <UI_Update+0x26c>)
@@ -1522,9 +1761,11 @@ Disassembly of section .text:
  8000ef0:	2201      	movs	r2, #1
  8000ef2:	715a      	strb	r2, [r3, #5]
  8000ef4:	e022      	b.n	8000f3c <UI_Update+0x13c>
+        }else if(btndown_status == BUTTON_SHORT){
  8000ef6:	797b      	ldrb	r3, [r7, #5]
  8000ef8:	2b01      	cmp	r3, #1
  8000efa:	d11f      	bne.n	8000f3c <UI_Update+0x13c>
+            list_menu[currentMenuIndex].isSelect = 0;
  8000efc:	4b5a      	ldr	r3, [pc, #360]	@ (8001068 <UI_Update+0x268>)
  8000efe:	781b      	ldrb	r3, [r3, #0]
  8000f00:	4a5a      	ldr	r2, [pc, #360]	@ (800106c <UI_Update+0x26c>)
@@ -1532,6 +1773,7 @@ Disassembly of section .text:
  8000f04:	4413      	add	r3, r2
  8000f06:	2200      	movs	r2, #0
  8000f08:	715a      	strb	r2, [r3, #5]
+            if(currentMenuIndex >= menuSize-1){
  8000f0a:	4b57      	ldr	r3, [pc, #348]	@ (8001068 <UI_Update+0x268>)
  8000f0c:	781b      	ldrb	r3, [r3, #0]
  8000f0e:	461a      	mov	r2, r3
@@ -1540,16 +1782,21 @@ Disassembly of section .text:
  8000f14:	3b01      	subs	r3, #1
  8000f16:	429a      	cmp	r2, r3
  8000f18:	db03      	blt.n	8000f22 <UI_Update+0x122>
+                currentMenuIndex = 0;
  8000f1a:	4b53      	ldr	r3, [pc, #332]	@ (8001068 <UI_Update+0x268>)
  8000f1c:	2200      	movs	r2, #0
  8000f1e:	701a      	strb	r2, [r3, #0]
  8000f20:	e005      	b.n	8000f2e <UI_Update+0x12e>
+            }else{
+                currentMenuIndex++;
  8000f22:	4b51      	ldr	r3, [pc, #324]	@ (8001068 <UI_Update+0x268>)
  8000f24:	781b      	ldrb	r3, [r3, #0]
  8000f26:	3301      	adds	r3, #1
  8000f28:	b2da      	uxtb	r2, r3
  8000f2a:	4b4f      	ldr	r3, [pc, #316]	@ (8001068 <UI_Update+0x268>)
  8000f2c:	701a      	strb	r2, [r3, #0]
+            }
+            list_menu[currentMenuIndex].isSelect = 1;
  8000f2e:	4b4e      	ldr	r3, [pc, #312]	@ (8001068 <UI_Update+0x268>)
  8000f30:	781b      	ldrb	r3, [r3, #0]
  8000f32:	4a4e      	ldr	r2, [pc, #312]	@ (800106c <UI_Update+0x26c>)
@@ -1557,60 +1804,85 @@ Disassembly of section .text:
  8000f36:	4413      	add	r3, r2
  8000f38:	2201      	movs	r2, #1
  8000f3a:	715a      	strb	r2, [r3, #5]
+    }
+
+//============BUTTONS_END============//
+
+//============DRAW_BEGIN============//
+    LCD_Clear();
  8000f3c:	f000 f9de 	bl	80012fc <LCD_Clear>
+    if(currentScreen == MAIN_VIEW){
  8000f40:	4b46      	ldr	r3, [pc, #280]	@ (800105c <UI_Update+0x25c>)
  8000f42:	781b      	ldrb	r3, [r3, #0]
  8000f44:	2b0a      	cmp	r3, #10
  8000f46:	d132      	bne.n	8000fae <UI_Update+0x1ae>
+        // Draw battery information
+        if(HAL_GPIO_ReadPin(CHARG_GPIO_Port, CHARG_Pin) == GPIO_PIN_SET){
  8000f48:	f44f 7180 	mov.w	r1, #256	@ 0x100
  8000f4c:	4845      	ldr	r0, [pc, #276]	@ (8001064 <UI_Update+0x264>)
  8000f4e:	f002 faad 	bl	80034ac <HAL_GPIO_ReadPin>
  8000f52:	4603      	mov	r3, r0
  8000f54:	2b01      	cmp	r3, #1
  8000f56:	d106      	bne.n	8000f66 <UI_Update+0x166>
+            LCD_DrawText(96, 4, batStr, 0);
  8000f58:	2300      	movs	r3, #0
  8000f5a:	4a46      	ldr	r2, [pc, #280]	@ (8001074 <UI_Update+0x274>)
  8000f5c:	2104      	movs	r1, #4
  8000f5e:	2060      	movs	r0, #96	@ 0x60
  8000f60:	f000 fb18 	bl	8001594 <LCD_DrawText>
  8000f64:	e00b      	b.n	8000f7e <UI_Update+0x17e>
+        }else{
+        	LCD_DrawText(88, 6, "~", 0);// Charging indicator
  8000f66:	2300      	movs	r3, #0
  8000f68:	4a43      	ldr	r2, [pc, #268]	@ (8001078 <UI_Update+0x278>)
  8000f6a:	2106      	movs	r1, #6
  8000f6c:	2058      	movs	r0, #88	@ 0x58
  8000f6e:	f000 fb11 	bl	8001594 <LCD_DrawText>
+        	LCD_DrawText(96, 4, batStr, 0);
  8000f72:	2300      	movs	r3, #0
  8000f74:	4a3f      	ldr	r2, [pc, #252]	@ (8001074 <UI_Update+0x274>)
  8000f76:	2104      	movs	r1, #4
  8000f78:	2060      	movs	r0, #96	@ 0x60
  8000f7a:	f000 fb0b 	bl	8001594 <LCD_DrawText>
+        }
+        // Draw core UI elements
+        LCD_DrawText(4, 16, timeStr, 1);//TIME
  8000f7e:	2301      	movs	r3, #1
  8000f80:	4a3e      	ldr	r2, [pc, #248]	@ (800107c <UI_Update+0x27c>)
  8000f82:	2110      	movs	r1, #16
  8000f84:	2004      	movs	r0, #4
  8000f86:	f000 fb05 	bl	8001594 <LCD_DrawText>
+		LCD_DrawText(16, 36, dateStr, 0);//DATE
  8000f8a:	2300      	movs	r3, #0
  8000f8c:	4a3c      	ldr	r2, [pc, #240]	@ (8001080 <UI_Update+0x280>)
  8000f8e:	2124      	movs	r1, #36	@ 0x24
  8000f90:	2010      	movs	r0, #16
  8000f92:	f000 faff 	bl	8001594 <LCD_DrawText>
+		LCD_DrawText(8, 48, tempC, 0);//TEMPERATURE
  8000f96:	2300      	movs	r3, #0
  8000f98:	4a3a      	ldr	r2, [pc, #232]	@ (8001084 <UI_Update+0x284>)
  8000f9a:	2130      	movs	r1, #48	@ 0x30
  8000f9c:	2008      	movs	r0, #8
  8000f9e:	f000 faf9 	bl	8001594 <LCD_DrawText>
+
+
+        LCD_DrawChar(100, 32, 'A');
  8000fa2:	2241      	movs	r2, #65	@ 0x41
  8000fa4:	2120      	movs	r1, #32
  8000fa6:	2064      	movs	r0, #100	@ 0x64
  8000fa8:	f000 fa42 	bl	8001430 <LCD_DrawChar>
  8000fac:	e050      	b.n	8001050 <UI_Update+0x250>
+    }else if (currentScreen == MENU_VIEW){
  8000fae:	4b2b      	ldr	r3, [pc, #172]	@ (800105c <UI_Update+0x25c>)
  8000fb0:	781b      	ldrb	r3, [r3, #0]
  8000fb2:	2b0b      	cmp	r3, #11
  8000fb4:	d13d      	bne.n	8001032 <UI_Update+0x232>
+        // Draw simple static menu
+        for(uint8_t i = 0; i < (sizeof(list_menu)/sizeof(MenuItem)); i++){
  8000fb6:	2300      	movs	r3, #0
  8000fb8:	71fb      	strb	r3, [r7, #7]
  8000fba:	e031      	b.n	8001020 <UI_Update+0x220>
+            if(list_menu[i].isSelect){
  8000fbc:	79fb      	ldrb	r3, [r7, #7]
  8000fbe:	4a2b      	ldr	r2, [pc, #172]	@ (800106c <UI_Update+0x26c>)
  8000fc0:	00db      	lsls	r3, r3, #3
@@ -1618,6 +1890,7 @@ Disassembly of section .text:
  8000fc4:	795b      	ldrb	r3, [r3, #5]
  8000fc6:	2b00      	cmp	r3, #0
  8000fc8:	d019      	beq.n	8000ffe <UI_Update+0x1fe>
+                LCD_DrawText(4, (4*(i*3)), ">", 0);
  8000fca:	79fb      	ldrb	r3, [r7, #7]
  8000fcc:	461a      	mov	r2, r3
  8000fce:	0052      	lsls	r2, r2, #1
@@ -1628,6 +1901,7 @@ Disassembly of section .text:
  8000fd8:	4a2b      	ldr	r2, [pc, #172]	@ (8001088 <UI_Update+0x288>)
  8000fda:	2004      	movs	r0, #4
  8000fdc:	f000 fada 	bl	8001594 <LCD_DrawText>
+                LCD_DrawText(12, (4*(i*3)), list_menu[i].title, 0);
  8000fe0:	79fb      	ldrb	r3, [r7, #7]
  8000fe2:	461a      	mov	r2, r3
  8000fe4:	0052      	lsls	r2, r2, #1
@@ -1641,6 +1915,8 @@ Disassembly of section .text:
  8000ff6:	200c      	movs	r0, #12
  8000ff8:	f000 facc 	bl	8001594 <LCD_DrawText>
  8000ffc:	e00d      	b.n	800101a <UI_Update+0x21a>
+            }else{
+                LCD_DrawText(4, (4*(i*3)), list_menu[i].title, 0);
  8000ffe:	79fb      	ldrb	r3, [r7, #7]
  8001000:	461a      	mov	r2, r3
  8001002:	0052      	lsls	r2, r2, #1
@@ -1653,31 +1929,46 @@ Disassembly of section .text:
  8001012:	2300      	movs	r3, #0
  8001014:	2004      	movs	r0, #4
  8001016:	f000 fabd 	bl	8001594 <LCD_DrawText>
+        for(uint8_t i = 0; i < (sizeof(list_menu)/sizeof(MenuItem)); i++){
  800101a:	79fb      	ldrb	r3, [r7, #7]
  800101c:	3301      	adds	r3, #1
  800101e:	71fb      	strb	r3, [r7, #7]
  8001020:	79fb      	ldrb	r3, [r7, #7]
  8001022:	2b04      	cmp	r3, #4
  8001024:	d9ca      	bls.n	8000fbc <UI_Update+0x1bc>
+            }
+        }
+        LCD_DrawChar(100, 32, 'B');
  8001026:	2242      	movs	r2, #66	@ 0x42
  8001028:	2120      	movs	r1, #32
  800102a:	2064      	movs	r0, #100	@ 0x64
  800102c:	f000 fa00 	bl	8001430 <LCD_DrawChar>
  8001030:	e00e      	b.n	8001050 <UI_Update+0x250>
+    }else if(currentScreen == UI_SET_TIME){
  8001032:	4b0a      	ldr	r3, [pc, #40]	@ (800105c <UI_Update+0x25c>)
  8001034:	781b      	ldrb	r3, [r3, #0]
  8001036:	2bb0      	cmp	r3, #176	@ 0xb0
  8001038:	d10a      	bne.n	8001050 <UI_Update+0x250>
+        UI_Time_Draw(btnup_status, btndown_status);
  800103a:	797a      	ldrb	r2, [r7, #5]
  800103c:	79bb      	ldrb	r3, [r7, #6]
  800103e:	4611      	mov	r1, r2
  8001040:	4618      	mov	r0, r3
  8001042:	f000 ff23 	bl	8001e8c <UI_Time_Draw>
+        LCD_DrawChar(100, 54, 't');
  8001046:	2274      	movs	r2, #116	@ 0x74
  8001048:	2136      	movs	r1, #54	@ 0x36
  800104a:	2064      	movs	r0, #100	@ 0x64
  800104c:	f000 f9f0 	bl	8001430 <LCD_DrawChar>
+    }
+
+    
+    LCD_Update();   
  8001050:	f000 f97a 	bl	8001348 <LCD_Update>
+//============DRAW_END============//
+
+    
+}
  8001054:	bf00      	nop
  8001056:	3708      	adds	r7, #8
  8001058:	46bd      	mov	sp, r7
@@ -1696,14 +1987,18 @@ Disassembly of section .text:
  8001088:	08005568 	.word	0x08005568
 
 0800108c <UI_SetView>:
+
+void UI_SetView(uint8_t id){
  800108c:	b480      	push	{r7}
  800108e:	b083      	sub	sp, #12
  8001090:	af00      	add	r7, sp, #0
  8001092:	4603      	mov	r3, r0
  8001094:	71fb      	strb	r3, [r7, #7]
+    currentScreen = id;
  8001096:	4a04      	ldr	r2, [pc, #16]	@ (80010a8 <UI_SetView+0x1c>)
  8001098:	79fb      	ldrb	r3, [r7, #7]
  800109a:	7013      	strb	r3, [r2, #0]
+}
  800109c:	bf00      	nop
  800109e:	370c      	adds	r7, #12
  80010a0:	46bd      	mov	sp, r7
@@ -1713,11 +2008,19 @@ Disassembly of section .text:
  80010a8:	20000020 	.word	0x20000020
 
 080010ac <UI_UpdateDataFromRTC>:
+
+/*
+ *  Update time/date data from RTC.
+ *  Should be called when rtc_tick flag is set
+*/
+void UI_UpdateDataFromRTC(){
  80010ac:	b580      	push	{r7, lr}
  80010ae:	af00      	add	r7, sp, #0
+    Get_Time_Now(timeStr, &clkTime);
  80010b0:	490c      	ldr	r1, [pc, #48]	@ (80010e4 <UI_UpdateDataFromRTC+0x38>)
  80010b2:	480d      	ldr	r0, [pc, #52]	@ (80010e8 <UI_UpdateDataFromRTC+0x3c>)
  80010b4:	f7ff fc08 	bl	80008c8 <Get_Time_Now>
+    if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
  80010b8:	4b0a      	ldr	r3, [pc, #40]	@ (80010e4 <UI_UpdateDataFromRTC+0x38>)
  80010ba:	781b      	ldrb	r3, [r3, #0]
  80010bc:	2b00      	cmp	r3, #0
@@ -1730,12 +2033,15 @@ Disassembly of section .text:
  80010ca:	789b      	ldrb	r3, [r3, #2]
  80010cc:	2b00      	cmp	r3, #0
  80010ce:	d106      	bne.n	80010de <UI_UpdateDataFromRTC+0x32>
+        Get_Date_Now(dateStr, dataFormat, &clkDate);
  80010d0:	4b06      	ldr	r3, [pc, #24]	@ (80010ec <UI_UpdateDataFromRTC+0x40>)
  80010d2:	781b      	ldrb	r3, [r3, #0]
  80010d4:	4a06      	ldr	r2, [pc, #24]	@ (80010f0 <UI_UpdateDataFromRTC+0x44>)
  80010d6:	4619      	mov	r1, r3
  80010d8:	4806      	ldr	r0, [pc, #24]	@ (80010f4 <UI_UpdateDataFromRTC+0x48>)
  80010da:	f7ff fc69 	bl	80009b0 <Get_Date_Now>
+    }
+}
  80010de:	bf00      	nop
  80010e0:	bd80      	pop	{r7, pc}
  80010e2:	bf00      	nop
@@ -1746,13 +2052,20 @@ Disassembly of section .text:
  80010f4:	200004d8 	.word	0x200004d8
 
 080010f8 <UI_UpdateDataFromADC>:
+/*
+ *  Update temperature and battery data from ADC.
+ *  Should be called when adc1_tick flag is set.
+*/
+void UI_UpdateDataFromADC(){
  80010f8:	b580      	push	{r7, lr}
  80010fa:	af00      	add	r7, sp, #0
+    Thermistor_strCalcTempC(tempC, adc1_value_thermistor);
  80010fc:	4b11      	ldr	r3, [pc, #68]	@ (8001144 <UI_UpdateDataFromADC+0x4c>)
  80010fe:	881b      	ldrh	r3, [r3, #0]
  8001100:	4619      	mov	r1, r3
  8001102:	4811      	ldr	r0, [pc, #68]	@ (8001148 <UI_UpdateDataFromADC+0x50>)
  8001104:	f7ff fdd4 	bl	8000cb0 <Thermistor_strCalcTempC>
+    vbat = getVBat(adc1_value_battery);//TEST
  8001108:	4b10      	ldr	r3, [pc, #64]	@ (800114c <UI_UpdateDataFromADC+0x54>)
  800110a:	881b      	ldrh	r3, [r3, #0]
  800110c:	4618      	mov	r0, r3
@@ -1760,6 +2073,7 @@ Disassembly of section .text:
  8001112:	4603      	mov	r3, r0
  8001114:	4a0e      	ldr	r2, [pc, #56]	@ (8001150 <UI_UpdateDataFromADC+0x58>)
  8001116:	6013      	str	r3, [r2, #0]
+    battery_level = getBatteryLevel(vbat);
  8001118:	4b0d      	ldr	r3, [pc, #52]	@ (8001150 <UI_UpdateDataFromADC+0x58>)
  800111a:	681b      	ldr	r3, [r3, #0]
  800111c:	4618      	mov	r0, r3
@@ -1771,6 +2085,7 @@ Disassembly of section .text:
  800112c:	b29a      	uxth	r2, r3
  800112e:	4b09      	ldr	r3, [pc, #36]	@ (8001154 <UI_UpdateDataFromADC+0x5c>)
  8001130:	801a      	strh	r2, [r3, #0]
+    uint16ToCharArrEx(batStr, battery_level, '%');
  8001132:	4b08      	ldr	r3, [pc, #32]	@ (8001154 <UI_UpdateDataFromADC+0x5c>)
  8001134:	881b      	ldrh	r3, [r3, #0]
  8001136:	2225      	movs	r2, #37	@ 0x25
@@ -1787,6 +2102,12 @@ Disassembly of section .text:
  8001158:	20000500 	.word	0x20000500
 
 0800115c <uint16ToCharArrEx>:
+
+void floatToCharArr(char *buf, float value){
+    uint16ToCharArrEx(buf, value, '\0');
+}
+
+void uint16ToCharArrEx(char *buf, uint16_t value, char lastChar){
  800115c:	b480      	push	{r7}
  800115e:	b085      	sub	sp, #20
  8001160:	af00      	add	r7, sp, #0
@@ -1795,26 +2116,38 @@ Disassembly of section .text:
  8001166:	807b      	strh	r3, [r7, #2]
  8001168:	4613      	mov	r3, r2
  800116a:	707b      	strb	r3, [r7, #1]
+	char *p = buf;
  800116c:	687b      	ldr	r3, [r7, #4]
  800116e:	60fb      	str	r3, [r7, #12]
+
+	uint16_t whole = (uint16_t)value;
  8001170:	887b      	ldrh	r3, [r7, #2]
  8001172:	817b      	strh	r3, [r7, #10]
+
+	uint16_t div = 1;
  8001174:	2301      	movs	r3, #1
  8001176:	813b      	strh	r3, [r7, #8]
+	while (whole/div >= 10) {
  8001178:	e005      	b.n	8001186 <uint16ToCharArrEx+0x2a>
+        div *= 10;
  800117a:	893b      	ldrh	r3, [r7, #8]
  800117c:	461a      	mov	r2, r3
  800117e:	0092      	lsls	r2, r2, #2
  8001180:	4413      	add	r3, r2
  8001182:	005b      	lsls	r3, r3, #1
  8001184:	813b      	strh	r3, [r7, #8]
+	while (whole/div >= 10) {
  8001186:	897a      	ldrh	r2, [r7, #10]
  8001188:	893b      	ldrh	r3, [r7, #8]
  800118a:	fbb2 f3f3 	udiv	r3, r2, r3
  800118e:	b29b      	uxth	r3, r3
  8001190:	2b09      	cmp	r3, #9
  8001192:	d8f2      	bhi.n	800117a <uint16ToCharArrEx+0x1e>
+	}
+
+    while (div > 0){
  8001194:	e019      	b.n	80011ca <uint16ToCharArrEx+0x6e>
+    	*p++ = whole / div + '0';
  8001196:	897a      	ldrh	r2, [r7, #10]
  8001198:	893b      	ldrh	r3, [r7, #8]
  800119a:	fbb2 f3f3 	udiv	r3, r2, r3
@@ -1826,33 +2159,44 @@ Disassembly of section .text:
  80011a8:	3230      	adds	r2, #48	@ 0x30
  80011aa:	b2d2      	uxtb	r2, r2
  80011ac:	701a      	strb	r2, [r3, #0]
+    	whole %= div;
  80011ae:	897b      	ldrh	r3, [r7, #10]
  80011b0:	893a      	ldrh	r2, [r7, #8]
  80011b2:	fbb3 f1f2 	udiv	r1, r3, r2
  80011b6:	fb01 f202 	mul.w	r2, r1, r2
  80011ba:	1a9b      	subs	r3, r3, r2
  80011bc:	817b      	strh	r3, [r7, #10]
+    	div /= 10;
  80011be:	893b      	ldrh	r3, [r7, #8]
  80011c0:	4a0c      	ldr	r2, [pc, #48]	@ (80011f4 <uint16ToCharArrEx+0x98>)
  80011c2:	fba2 2303 	umull	r2, r3, r2, r3
  80011c6:	08db      	lsrs	r3, r3, #3
  80011c8:	813b      	strh	r3, [r7, #8]
+    while (div > 0){
  80011ca:	893b      	ldrh	r3, [r7, #8]
  80011cc:	2b00      	cmp	r3, #0
  80011ce:	d1e2      	bne.n	8001196 <uint16ToCharArrEx+0x3a>
+    }
+
+    if (lastChar != '\0')
  80011d0:	787b      	ldrb	r3, [r7, #1]
  80011d2:	2b00      	cmp	r3, #0
  80011d4:	d004      	beq.n	80011e0 <uint16ToCharArrEx+0x84>
+        *p++ = lastChar;
  80011d6:	68fb      	ldr	r3, [r7, #12]
  80011d8:	1c5a      	adds	r2, r3, #1
  80011da:	60fa      	str	r2, [r7, #12]
  80011dc:	787a      	ldrb	r2, [r7, #1]
  80011de:	701a      	strb	r2, [r3, #0]
+
+    *p++ = '\0';
  80011e0:	68fb      	ldr	r3, [r7, #12]
  80011e2:	1c5a      	adds	r2, r3, #1
  80011e4:	60fa      	str	r2, [r7, #12]
  80011e6:	2200      	movs	r2, #0
  80011e8:	701a      	strb	r2, [r3, #0]
+
+}
  80011ea:	bf00      	nop
  80011ec:	3714      	adds	r7, #20
  80011ee:	46bd      	mov	sp, r7
@@ -1861,6 +2205,12 @@ Disassembly of section .text:
  80011f4:	cccccccd 	.word	0xcccccccd
 
 080011f8 <LCD_Send>:
+    { 0x07, 0x0C, 0x0C, 0x38, 0x0C, 0x0C, 0x07, 0x00},   // U+007D (})
+    { 0x6E, 0x3B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},   // U+007E (~)
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}    // U+007F
+};
+
+static void LCD_Send(uint8_t data, uint8_t isdata){
  80011f8:	b580      	push	{r7, lr}
  80011fa:	b082      	sub	sp, #8
  80011fc:	af00      	add	r7, sp, #0
@@ -1869,31 +2219,43 @@ Disassembly of section .text:
  8001202:	71fb      	strb	r3, [r7, #7]
  8001204:	4613      	mov	r3, r2
  8001206:	71bb      	strb	r3, [r7, #6]
+
+	if(isdata){
  8001208:	79bb      	ldrb	r3, [r7, #6]
  800120a:	2b00      	cmp	r3, #0
  800120c:	d005      	beq.n	800121a <LCD_Send+0x22>
+		HAL_GPIO_WritePin(LCD_A0_GPIO_Port, LCD_A0_Pin, GPIO_PIN_SET);
  800120e:	2201      	movs	r2, #1
  8001210:	2110      	movs	r1, #16
  8001212:	480f      	ldr	r0, [pc, #60]	@ (8001250 <LCD_Send+0x58>)
  8001214:	f002 f961 	bl	80034da <HAL_GPIO_WritePin>
  8001218:	e004      	b.n	8001224 <LCD_Send+0x2c>
+	}else{
+		HAL_GPIO_WritePin(LCD_A0_GPIO_Port, LCD_A0_Pin, GPIO_PIN_RESET);
  800121a:	2200      	movs	r2, #0
  800121c:	2110      	movs	r1, #16
  800121e:	480c      	ldr	r0, [pc, #48]	@ (8001250 <LCD_Send+0x58>)
  8001220:	f002 f95b 	bl	80034da <HAL_GPIO_WritePin>
+	}
+
+	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
  8001224:	2200      	movs	r2, #0
  8001226:	2104      	movs	r1, #4
  8001228:	4809      	ldr	r0, [pc, #36]	@ (8001250 <LCD_Send+0x58>)
  800122a:	f002 f956 	bl	80034da <HAL_GPIO_WritePin>
+	HAL_SPI_Transmit(&hspi1, &data, 1, HAL_MAX_DELAY);
  800122e:	1df9      	adds	r1, r7, #7
  8001230:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
  8001234:	2201      	movs	r2, #1
  8001236:	4807      	ldr	r0, [pc, #28]	@ (8001254 <LCD_Send+0x5c>)
  8001238:	f003 fdd2 	bl	8004de0 <HAL_SPI_Transmit>
+	HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
  800123c:	2201      	movs	r2, #1
  800123e:	2104      	movs	r1, #4
  8001240:	4803      	ldr	r0, [pc, #12]	@ (8001250 <LCD_Send+0x58>)
  8001242:	f002 f94a 	bl	80034da <HAL_GPIO_WritePin>
+
+}
  8001246:	bf00      	nop
  8001248:	3708      	adds	r7, #8
  800124a:	46bd      	mov	sp, r7
@@ -1903,78 +2265,110 @@ Disassembly of section .text:
  8001254:	20000950 	.word	0x20000950
 
 08001258 <LCD_Init>:
+
+void LCD_Init(){
  8001258:	b580      	push	{r7, lr}
  800125a:	af00      	add	r7, sp, #0
+
+	  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_RESET);
  800125c:	2200      	movs	r2, #0
  800125e:	2108      	movs	r1, #8
  8001260:	4825      	ldr	r0, [pc, #148]	@ (80012f8 <LCD_Init+0xa0>)
  8001262:	f002 f93a 	bl	80034da <HAL_GPIO_WritePin>
+	  HAL_Delay(10);
  8001266:	200a      	movs	r0, #10
  8001268:	f000 ffb2 	bl	80021d0 <HAL_Delay>
+	  HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
  800126c:	2201      	movs	r2, #1
  800126e:	2108      	movs	r1, #8
  8001270:	4821      	ldr	r0, [pc, #132]	@ (80012f8 <LCD_Init+0xa0>)
  8001272:	f002 f932 	bl	80034da <HAL_GPIO_WritePin>
+	  HAL_Delay(10);
  8001276:	200a      	movs	r0, #10
  8001278:	f000 ffaa 	bl	80021d0 <HAL_Delay>
+
+	  // последовательность из даташита
+	  LCD_Send(0xAE, 0);   // Display OFF
  800127c:	2100      	movs	r1, #0
  800127e:	20ae      	movs	r0, #174	@ 0xae
  8001280:	f7ff ffba 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xA2, 0);   // Bias 1/9
  8001284:	2100      	movs	r1, #0
  8001286:	20a2      	movs	r0, #162	@ 0xa2
  8001288:	f7ff ffb6 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xA0, 0);   // SEG direction normal
  800128c:	2100      	movs	r1, #0
  800128e:	20a0      	movs	r0, #160	@ 0xa0
  8001290:	f7ff ffb2 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xC8, 0);   // COM direction reverse (твой экран "вверх ногами" — оставить так)
  8001294:	2100      	movs	r1, #0
  8001296:	20c8      	movs	r0, #200	@ 0xc8
  8001298:	f7ff ffae 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0x2F, 0);   // Power control: booster, regulator, follower ON
  800129c:	2100      	movs	r1, #0
  800129e:	202f      	movs	r0, #47	@ 0x2f
  80012a0:	f7ff ffaa 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0x27, 0);   // Regulation ratio (0x24–0x27)
  80012a4:	2100      	movs	r1, #0
  80012a6:	2027      	movs	r0, #39	@ 0x27
  80012a8:	f7ff ffa6 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xF8, 0);   // Booster ratio command
  80012ac:	2100      	movs	r1, #0
  80012ae:	20f8      	movs	r0, #248	@ 0xf8
  80012b0:	f7ff ffa2 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0x01, 0);   // 5x booster
  80012b4:	2100      	movs	r1, #0
  80012b6:	2001      	movs	r0, #1
  80012b8:	f7ff ff9e 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0x81, 0);   // Set contrast command
  80012bc:	2100      	movs	r1, #0
  80012be:	2081      	movs	r0, #129	@ 0x81
  80012c0:	f7ff ff9a 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0x10, 0);   // Contrast value (0x20–0x30 обычно видно)
  80012c4:	2100      	movs	r1, #0
  80012c6:	2010      	movs	r0, #16
  80012c8:	f7ff ff96 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xAC, 0);   // Static indicator off
  80012cc:	2100      	movs	r1, #0
  80012ce:	20ac      	movs	r0, #172	@ 0xac
  80012d0:	f7ff ff92 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0x00, 0);
  80012d4:	2100      	movs	r1, #0
  80012d6:	2000      	movs	r0, #0
  80012d8:	f7ff ff8e 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xA4, 0);   // Normal (not inverted)
  80012dc:	2100      	movs	r1, #0
  80012de:	20a4      	movs	r0, #164	@ 0xa4
  80012e0:	f7ff ff8a 	bl	80011f8 <LCD_Send>
+	  LCD_Send(0xAF, 0);   // Display ON
  80012e4:	2100      	movs	r1, #0
  80012e6:	20af      	movs	r0, #175	@ 0xaf
  80012e8:	f7ff ff86 	bl	80011f8 <LCD_Send>
+
+	  LCD_Clear();
  80012ec:	f000 f806 	bl	80012fc <LCD_Clear>
+	  LCD_Update();
  80012f0:	f000 f82a 	bl	8001348 <LCD_Update>
+}
  80012f4:	bf00      	nop
  80012f6:	bd80      	pop	{r7, pc}
  80012f8:	40010800 	.word	0x40010800
 
 080012fc <LCD_Clear>:
+
+void LCD_Clear(){
  80012fc:	b480      	push	{r7}
  80012fe:	b083      	sub	sp, #12
  8001300:	af00      	add	r7, sp, #0
+	for (uint8_t page = 0; page < 8; page++)
  8001302:	2300      	movs	r3, #0
  8001304:	71fb      	strb	r3, [r7, #7]
  8001306:	e014      	b.n	8001332 <LCD_Clear+0x36>
+	        for (uint8_t col = 0; col < 128; col++)
  8001308:	2300      	movs	r3, #0
  800130a:	71bb      	strb	r3, [r7, #6]
  800130c:	e00a      	b.n	8001324 <LCD_Clear+0x28>
+	            lcd_buffer[page][col] = 0x00;
  800130e:	79fa      	ldrb	r2, [r7, #7]
  8001310:	79bb      	ldrb	r3, [r7, #6]
  8001312:	490c      	ldr	r1, [pc, #48]	@ (8001344 <LCD_Clear+0x48>)
@@ -1983,18 +2377,21 @@ Disassembly of section .text:
  8001318:	4413      	add	r3, r2
  800131a:	2200      	movs	r2, #0
  800131c:	701a      	strb	r2, [r3, #0]
+	        for (uint8_t col = 0; col < 128; col++)
  800131e:	79bb      	ldrb	r3, [r7, #6]
  8001320:	3301      	adds	r3, #1
  8001322:	71bb      	strb	r3, [r7, #6]
  8001324:	f997 3006 	ldrsb.w	r3, [r7, #6]
  8001328:	2b00      	cmp	r3, #0
  800132a:	daf0      	bge.n	800130e <LCD_Clear+0x12>
+	for (uint8_t page = 0; page < 8; page++)
  800132c:	79fb      	ldrb	r3, [r7, #7]
  800132e:	3301      	adds	r3, #1
  8001330:	71fb      	strb	r3, [r7, #7]
  8001332:	79fb      	ldrb	r3, [r7, #7]
  8001334:	2b07      	cmp	r3, #7
  8001336:	d9e7      	bls.n	8001308 <LCD_Clear+0xc>
+}
  8001338:	bf00      	nop
  800133a:	bf00      	nop
  800133c:	370c      	adds	r7, #12
@@ -2004,32 +2401,41 @@ Disassembly of section .text:
  8001344:	2000050c 	.word	0x2000050c
 
 08001348 <LCD_Update>:
+
+void LCD_Update(){
  8001348:	b580      	push	{r7, lr}
  800134a:	b082      	sub	sp, #8
  800134c:	af00      	add	r7, sp, #0
+	for (uint8_t page = 0; page < 8; page++) {
  800134e:	2300      	movs	r3, #0
  8001350:	71fb      	strb	r3, [r7, #7]
  8001352:	e02b      	b.n	80013ac <LCD_Update+0x64>
+		 LCD_Send(0xB0 | page, 0);// Set page address >> SET START LINE
  8001354:	79fb      	ldrb	r3, [r7, #7]
  8001356:	f063 034f 	orn	r3, r3, #79	@ 0x4f
  800135a:	b2db      	uxtb	r3, r3
  800135c:	2100      	movs	r1, #0
  800135e:	4618      	mov	r0, r3
  8001360:	f7ff ff4a 	bl	80011f8 <LCD_Send>
+		 LCD_Send(0x10, 0); // Set column address high "16"
  8001364:	2100      	movs	r1, #0
  8001366:	2010      	movs	r0, #16
  8001368:	f7ff ff46 	bl	80011f8 <LCD_Send>
+		 LCD_Send(0x00, 0); // Set column address low "0"
  800136c:	2100      	movs	r1, #0
  800136e:	2000      	movs	r0, #0
  8001370:	f7ff ff42 	bl	80011f8 <LCD_Send>
+		 HAL_GPIO_WritePin(LCD_A0_GPIO_Port, LCD_A0_Pin, GPIO_PIN_SET);//DATA
  8001374:	2201      	movs	r2, #1
  8001376:	2110      	movs	r1, #16
  8001378:	4810      	ldr	r0, [pc, #64]	@ (80013bc <LCD_Update+0x74>)
  800137a:	f002 f8ae 	bl	80034da <HAL_GPIO_WritePin>
+		 HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
  800137e:	2200      	movs	r2, #0
  8001380:	2104      	movs	r1, #4
  8001382:	480e      	ldr	r0, [pc, #56]	@ (80013bc <LCD_Update+0x74>)
  8001384:	f002 f8a9 	bl	80034da <HAL_GPIO_WritePin>
+		 HAL_SPI_Transmit(&hspi1, lcd_buffer[page], 128, HAL_MAX_DELAY);
  8001388:	79fb      	ldrb	r3, [r7, #7]
  800138a:	01db      	lsls	r3, r3, #7
  800138c:	4a0c      	ldr	r2, [pc, #48]	@ (80013c0 <LCD_Update+0x78>)
@@ -2038,16 +2444,20 @@ Disassembly of section .text:
  8001394:	2280      	movs	r2, #128	@ 0x80
  8001396:	480b      	ldr	r0, [pc, #44]	@ (80013c4 <LCD_Update+0x7c>)
  8001398:	f003 fd22 	bl	8004de0 <HAL_SPI_Transmit>
+		 HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
  800139c:	2201      	movs	r2, #1
  800139e:	2104      	movs	r1, #4
  80013a0:	4806      	ldr	r0, [pc, #24]	@ (80013bc <LCD_Update+0x74>)
  80013a2:	f002 f89a 	bl	80034da <HAL_GPIO_WritePin>
+	for (uint8_t page = 0; page < 8; page++) {
  80013a6:	79fb      	ldrb	r3, [r7, #7]
  80013a8:	3301      	adds	r3, #1
  80013aa:	71fb      	strb	r3, [r7, #7]
  80013ac:	79fb      	ldrb	r3, [r7, #7]
  80013ae:	2b07      	cmp	r3, #7
  80013b0:	d9d0      	bls.n	8001354 <LCD_Update+0xc>
+	}
+}
  80013b2:	bf00      	nop
  80013b4:	bf00      	nop
  80013b6:	3708      	adds	r7, #8
@@ -2058,6 +2468,8 @@ Disassembly of section .text:
  80013c4:	20000950 	.word	0x20000950
 
 080013c8 <LCD_DrawPoint>:
+
+void LCD_DrawPoint(uint8_t x, uint8_t y){
  80013c8:	b480      	push	{r7}
  80013ca:	b083      	sub	sp, #12
  80013cc:	af00      	add	r7, sp, #0
@@ -2066,12 +2478,14 @@ Disassembly of section .text:
  80013d2:	71fb      	strb	r3, [r7, #7]
  80013d4:	4613      	mov	r3, r2
  80013d6:	71bb      	strb	r3, [r7, #6]
+	if (x >= 128 || y >= 64) return;
  80013d8:	f997 3007 	ldrsb.w	r3, [r7, #7]
  80013dc:	2b00      	cmp	r3, #0
  80013de:	db20      	blt.n	8001422 <LCD_DrawPoint+0x5a>
  80013e0:	79bb      	ldrb	r3, [r7, #6]
  80013e2:	2b3f      	cmp	r3, #63	@ 0x3f
  80013e4:	d81d      	bhi.n	8001422 <LCD_DrawPoint+0x5a>
+	lcd_buffer[y / 8][x] |= (1 << (y % 8));
  80013e6:	79bb      	ldrb	r3, [r7, #6]
  80013e8:	08db      	lsrs	r3, r3, #3
  80013ea:	b2d8      	uxtb	r0, r3
@@ -2100,7 +2514,9 @@ Disassembly of section .text:
  800141c:	4602      	mov	r2, r0
  800141e:	701a      	strb	r2, [r3, #0]
  8001420:	e000      	b.n	8001424 <LCD_DrawPoint+0x5c>
+	if (x >= 128 || y >= 64) return;
  8001422:	bf00      	nop
+}
  8001424:	370c      	adds	r7, #12
  8001426:	46bd      	mov	sp, r7
  8001428:	bc80      	pop	{r7}
@@ -2108,6 +2524,8 @@ Disassembly of section .text:
  800142c:	2000050c 	.word	0x2000050c
 
 08001430 <LCD_DrawChar>:
+
+void LCD_DrawChar(uint8_t x, uint8_t y, char ch){
  8001430:	b580      	push	{r7, lr}
  8001432:	b084      	sub	sp, #16
  8001434:	af00      	add	r7, sp, #0
@@ -2117,12 +2535,15 @@ Disassembly of section .text:
  800143c:	71bb      	strb	r3, [r7, #6]
  800143e:	4613      	mov	r3, r2
  8001440:	717b      	strb	r3, [r7, #5]
+	for(uint8_t c = 0; c < 8; c++){
  8001442:	2300      	movs	r3, #0
  8001444:	73fb      	strb	r3, [r7, #15]
  8001446:	e025      	b.n	8001494 <LCD_DrawChar+0x64>
+			for(uint8_t b = 0; b < 8; b++){
  8001448:	2300      	movs	r3, #0
  800144a:	73bb      	strb	r3, [r7, #14]
  800144c:	e01c      	b.n	8001488 <LCD_DrawChar+0x58>
+				 if(font8x8_basic[ch][c] >> b & 1){
  800144e:	797a      	ldrb	r2, [r7, #5]
  8001450:	7bfb      	ldrb	r3, [r7, #15]
  8001452:	4914      	ldr	r1, [pc, #80]	@ (80014a4 <LCD_DrawChar+0x74>)
@@ -2136,6 +2557,7 @@ Disassembly of section .text:
  8001464:	f003 0301 	and.w	r3, r3, #1
  8001468:	2b00      	cmp	r3, #0
  800146a:	d00a      	beq.n	8001482 <LCD_DrawChar+0x52>
+					 LCD_DrawPoint(x+b, y+c);
  800146c:	79fa      	ldrb	r2, [r7, #7]
  800146e:	7bbb      	ldrb	r3, [r7, #14]
  8001470:	4413      	add	r3, r2
@@ -2146,18 +2568,24 @@ Disassembly of section .text:
  800147a:	b2db      	uxtb	r3, r3
  800147c:	4619      	mov	r1, r3
  800147e:	f7ff ffa3 	bl	80013c8 <LCD_DrawPoint>
+			for(uint8_t b = 0; b < 8; b++){
  8001482:	7bbb      	ldrb	r3, [r7, #14]
  8001484:	3301      	adds	r3, #1
  8001486:	73bb      	strb	r3, [r7, #14]
  8001488:	7bbb      	ldrb	r3, [r7, #14]
  800148a:	2b07      	cmp	r3, #7
  800148c:	d9df      	bls.n	800144e <LCD_DrawChar+0x1e>
+	for(uint8_t c = 0; c < 8; c++){
  800148e:	7bfb      	ldrb	r3, [r7, #15]
  8001490:	3301      	adds	r3, #1
  8001492:	73fb      	strb	r3, [r7, #15]
  8001494:	7bfb      	ldrb	r3, [r7, #15]
  8001496:	2b07      	cmp	r3, #7
  8001498:	d9d6      	bls.n	8001448 <LCD_DrawChar+0x18>
+				 }
+			}
+		}
+}
  800149a:	bf00      	nop
  800149c:	bf00      	nop
  800149e:	3710      	adds	r7, #16
@@ -2166,6 +2594,8 @@ Disassembly of section .text:
  80014a4:	20000050 	.word	0x20000050
 
 080014a8 <LCD_DrawCharX2>:
+
+void LCD_DrawCharX2(uint8_t x, uint8_t y, char ch){
  80014a8:	b580      	push	{r7, lr}
  80014aa:	b084      	sub	sp, #16
  80014ac:	af00      	add	r7, sp, #0
@@ -2175,12 +2605,15 @@ Disassembly of section .text:
  80014b4:	71bb      	strb	r3, [r7, #6]
  80014b6:	4613      	mov	r3, r2
  80014b8:	717b      	strb	r3, [r7, #5]
+	for(uint8_t c = 0; c < 8; c++){
  80014ba:	2300      	movs	r3, #0
  80014bc:	73fb      	strb	r3, [r7, #15]
  80014be:	e05e      	b.n	800157e <LCD_DrawCharX2+0xd6>
+			for(uint8_t b = 0; b < 8; b++){
  80014c0:	2300      	movs	r3, #0
  80014c2:	73bb      	strb	r3, [r7, #14]
  80014c4:	e055      	b.n	8001572 <LCD_DrawCharX2+0xca>
+				 if(font8x8_basic[ch][c] >> b & 1){
  80014c6:	797a      	ldrb	r2, [r7, #5]
  80014c8:	7bfb      	ldrb	r3, [r7, #15]
  80014ca:	4931      	ldr	r1, [pc, #196]	@ (8001590 <LCD_DrawCharX2+0xe8>)
@@ -2194,6 +2627,7 @@ Disassembly of section .text:
  80014dc:	f003 0301 	and.w	r3, r3, #1
  80014e0:	2b00      	cmp	r3, #0
  80014e2:	d043      	beq.n	800156c <LCD_DrawCharX2+0xc4>
+					 LCD_DrawPoint(x+b*2, y+c*2);//0|0
  80014e4:	7bbb      	ldrb	r3, [r7, #14]
  80014e6:	005b      	lsls	r3, r3, #1
  80014e8:	b2da      	uxtb	r2, r3
@@ -2208,6 +2642,7 @@ Disassembly of section .text:
  80014fa:	b2db      	uxtb	r3, r3
  80014fc:	4619      	mov	r1, r3
  80014fe:	f7ff ff63 	bl	80013c8 <LCD_DrawPoint>
+					 LCD_DrawPoint(x+b*2, y+1+c*2);//0|1
  8001502:	7bbb      	ldrb	r3, [r7, #14]
  8001504:	005b      	lsls	r3, r3, #1
  8001506:	b2da      	uxtb	r2, r3
@@ -2224,6 +2659,7 @@ Disassembly of section .text:
  800151c:	b2db      	uxtb	r3, r3
  800151e:	4619      	mov	r1, r3
  8001520:	f7ff ff52 	bl	80013c8 <LCD_DrawPoint>
+					 LCD_DrawPoint(x+1+b*2, y+c*2);//1|0
  8001524:	7bbb      	ldrb	r3, [r7, #14]
  8001526:	005b      	lsls	r3, r3, #1
  8001528:	b2da      	uxtb	r2, r3
@@ -2240,6 +2676,7 @@ Disassembly of section .text:
  800153e:	b2db      	uxtb	r3, r3
  8001540:	4619      	mov	r1, r3
  8001542:	f7ff ff41 	bl	80013c8 <LCD_DrawPoint>
+					 LCD_DrawPoint(x+1+b*2, y+1+c*2);//1|1
  8001546:	7bbb      	ldrb	r3, [r7, #14]
  8001548:	005b      	lsls	r3, r3, #1
  800154a:	b2da      	uxtb	r2, r3
@@ -2258,18 +2695,24 @@ Disassembly of section .text:
  8001564:	b2db      	uxtb	r3, r3
  8001566:	4619      	mov	r1, r3
  8001568:	f7ff ff2e 	bl	80013c8 <LCD_DrawPoint>
+			for(uint8_t b = 0; b < 8; b++){
  800156c:	7bbb      	ldrb	r3, [r7, #14]
  800156e:	3301      	adds	r3, #1
  8001570:	73bb      	strb	r3, [r7, #14]
  8001572:	7bbb      	ldrb	r3, [r7, #14]
  8001574:	2b07      	cmp	r3, #7
  8001576:	d9a6      	bls.n	80014c6 <LCD_DrawCharX2+0x1e>
+	for(uint8_t c = 0; c < 8; c++){
  8001578:	7bfb      	ldrb	r3, [r7, #15]
  800157a:	3301      	adds	r3, #1
  800157c:	73fb      	strb	r3, [r7, #15]
  800157e:	7bfb      	ldrb	r3, [r7, #15]
  8001580:	2b07      	cmp	r3, #7
  8001582:	d99d      	bls.n	80014c0 <LCD_DrawCharX2+0x18>
+				 }
+			}
+		}
+}
  8001584:	bf00      	nop
  8001586:	bf00      	nop
  8001588:	3710      	adds	r7, #16
@@ -2279,6 +2722,8 @@ Disassembly of section .text:
  8001590:	20000050 	.word	0x20000050
 
 08001594 <LCD_DrawText>:
+
+void LCD_DrawText(uint8_t x, uint8_t y, const char *text, uint8_t isScale){
  8001594:	b580      	push	{r7, lr}
  8001596:	b082      	sub	sp, #8
  8001598:	af00      	add	r7, sp, #0
@@ -2290,10 +2735,13 @@ Disassembly of section .text:
  80015a4:	71bb      	strb	r3, [r7, #6]
  80015a6:	4613      	mov	r3, r2
  80015a8:	717b      	strb	r3, [r7, #5]
+	while(*text){
  80015aa:	e023      	b.n	80015f4 <LCD_DrawText+0x60>
+		if(isScale){
  80015ac:	797b      	ldrb	r3, [r7, #5]
  80015ae:	2b00      	cmp	r3, #0
  80015b0:	d011      	beq.n	80015d6 <LCD_DrawText+0x42>
+			LCD_DrawCharX2(x, y, *text++);
  80015b2:	683b      	ldr	r3, [r7, #0]
  80015b4:	1c5a      	adds	r2, r3, #1
  80015b6:	603a      	str	r2, [r7, #0]
@@ -2302,6 +2750,7 @@ Disassembly of section .text:
  80015bc:	79fb      	ldrb	r3, [r7, #7]
  80015be:	4618      	mov	r0, r3
  80015c0:	f7ff ff72 	bl	80014a8 <LCD_DrawCharX2>
+			x+=FONT_SIZE*2-1;
  80015c4:	2308      	movs	r3, #8
  80015c6:	005b      	lsls	r3, r3, #1
  80015c8:	b2da      	uxtb	r2, r3
@@ -2311,6 +2760,8 @@ Disassembly of section .text:
  80015d0:	3b01      	subs	r3, #1
  80015d2:	71fb      	strb	r3, [r7, #7]
  80015d4:	e00e      	b.n	80015f4 <LCD_DrawText+0x60>
+		}else{
+			LCD_DrawChar(x, y, *text++);
  80015d6:	683b      	ldr	r3, [r7, #0]
  80015d8:	1c5a      	adds	r2, r3, #1
  80015da:	603a      	str	r2, [r7, #0]
@@ -2319,16 +2770,22 @@ Disassembly of section .text:
  80015e0:	79fb      	ldrb	r3, [r7, #7]
  80015e2:	4618      	mov	r0, r3
  80015e4:	f7ff ff24 	bl	8001430 <LCD_DrawChar>
+			x+=FONT_SIZE-1;
  80015e8:	2208      	movs	r2, #8
  80015ea:	79fb      	ldrb	r3, [r7, #7]
  80015ec:	4413      	add	r3, r2
  80015ee:	b2db      	uxtb	r3, r3
  80015f0:	3b01      	subs	r3, #1
  80015f2:	71fb      	strb	r3, [r7, #7]
+	while(*text){
  80015f4:	683b      	ldr	r3, [r7, #0]
  80015f6:	781b      	ldrb	r3, [r3, #0]
  80015f8:	2b00      	cmp	r3, #0
  80015fa:	d1d7      	bne.n	80015ac <LCD_DrawText+0x18>
+		}
+
+	}
+}
  80015fc:	bf00      	nop
  80015fe:	bf00      	nop
  8001600:	3708      	adds	r7, #8
@@ -2355,6 +2812,8 @@ int main(void)
  800160e:	f000 fd7d 	bl	800210c <HAL_Init>
 
   /* USER CODE BEGIN Init */
+  // User Code for Project SWT - Licensed under GNU AGPLv3
+  // Copyright (C) 2025 Ch-Tima
   __HAL_RCC_PWR_CLK_ENABLE(); // PWR
  8001612:	4b1e      	ldr	r3, [pc, #120]	@ (800168c <main+0x84>)
  8001614:	69db      	ldr	r3, [r3, #28]
@@ -2387,6 +2846,8 @@ int main(void)
   MX_ADC1_Init();
  800163e:	f000 f883 	bl	8001748 <MX_ADC1_Init>
   /* USER CODE BEGIN 2 */
+  // User Code for Project SWT - Licensed under GNU AGPLv3
+  // Copyright (C) 2025 Ch-Tima
   HAL_ADCEx_Calibration_Start(&hadc1);//калебровка
  8001642:	4813      	ldr	r0, [pc, #76]	@ (8001690 <main+0x88>)
  8001644:	f001 fa1c 	bl	8002a80 <HAL_ADCEx_Calibration_Start>
@@ -2394,18 +2855,19 @@ int main(void)
  8001648:	f7ff fe06 	bl	8001258 <LCD_Init>
   UI_Init();
  800164c:	f7ff fbbe 	bl	8000dcc <UI_Init>
-  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  // User Code for Project SWT - Licensed under GNU AGPLv3
+  // Copyright (C) 2025 Ch-Tima
   HAL_ADC_Start_IT(&hadc1);
  8001650:	480f      	ldr	r0, [pc, #60]	@ (8001690 <main+0x88>)
  8001652:	f000 feb9 	bl	80023c8 <HAL_ADC_Start_IT>
-  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+	  // User Code for Project SWT - Licensed under GNU AGPLv3
+    // Copyright (C) 2025 Ch-Tima
     if (rtc_tick) {
  8001656:	4b0f      	ldr	r3, [pc, #60]	@ (8001694 <main+0x8c>)
  8001658:	781b      	ldrb	r3, [r3, #0]
@@ -2790,6 +3252,8 @@ static void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
+  // User Code for Project SWT - Licensed under GNU AGPLv3
+// Copyright (C) 2025 Ch-Tima
   if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F)
  800186c:	2101      	movs	r1, #1
  800186e:	4840      	ldr	r0, [pc, #256]	@ (8001970 <MX_RTC_Init+0x140>)
@@ -2915,11 +3379,11 @@ static void MX_RTC_Init(void)
  8001940:	4619      	mov	r1, r3
  8001942:	480b      	ldr	r0, [pc, #44]	@ (8001970 <MX_RTC_Init+0x140>)
  8001944:	f002 fd6a 	bl	800441c <HAL_RTC_SetDate>
-    }
-  /* USER CODE END Check_RTC_BKUP */
 
 
   /* USER CODE BEGIN RTC_Init 2 */
+  // User Code for Project SWT - Licensed under GNU AGPLv3
+  // Copyright (C) 2025 Ch-Tima
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
  8001948:	2200      	movs	r2, #0
  800194a:	2100      	movs	r1, #0
@@ -3209,7 +3673,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001af0:	b672      	cpsid	i
 }
  8001af2:	bf00      	nop
-  /* USER CODE BEGIN Error_Handler_Debug */
+// Copyright (C) 2025 Ch-Tima
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
@@ -3239,9 +3703,21 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001b20:	0800556c 	.word	0x0800556c
 
 08001b24 <HAL_MspInit>:
+/* USER CODE END 0 */
+/**
+  * Initializes the Global MSP.
+  */
+void HAL_MspInit(void)
+{
  8001b24:	b480      	push	{r7}
  8001b26:	b085      	sub	sp, #20
  8001b28:	af00      	add	r7, sp, #0
+
+  /* USER CODE BEGIN MspInit 0 */
+
+  /* USER CODE END MspInit 0 */
+
+  __HAL_RCC_AFIO_CLK_ENABLE();
  8001b2a:	4b15      	ldr	r3, [pc, #84]	@ (8001b80 <HAL_MspInit+0x5c>)
  8001b2c:	699b      	ldr	r3, [r3, #24]
  8001b2e:	4a14      	ldr	r2, [pc, #80]	@ (8001b80 <HAL_MspInit+0x5c>)
@@ -3252,6 +3728,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001b3a:	f003 0301 	and.w	r3, r3, #1
  8001b3e:	60bb      	str	r3, [r7, #8]
  8001b40:	68bb      	ldr	r3, [r7, #8]
+  __HAL_RCC_PWR_CLK_ENABLE();
  8001b42:	4b0f      	ldr	r3, [pc, #60]	@ (8001b80 <HAL_MspInit+0x5c>)
  8001b44:	69db      	ldr	r3, [r3, #28]
  8001b46:	4a0e      	ldr	r2, [pc, #56]	@ (8001b80 <HAL_MspInit+0x5c>)
@@ -3262,6 +3739,12 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001b52:	f003 5380 	and.w	r3, r3, #268435456	@ 0x10000000
  8001b56:	607b      	str	r3, [r7, #4]
  8001b58:	687b      	ldr	r3, [r7, #4]
+
+  /* System interrupt init*/
+
+  /** NOJTAG: JTAG-DP Disabled and SW-DP Enabled
+  */
+  __HAL_AFIO_REMAP_SWJ_NOJTAG();
  8001b5a:	4b0a      	ldr	r3, [pc, #40]	@ (8001b84 <HAL_MspInit+0x60>)
  8001b5c:	685b      	ldr	r3, [r3, #4]
  8001b5e:	60fb      	str	r3, [r7, #12]
@@ -3274,6 +3757,11 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001b70:	4a04      	ldr	r2, [pc, #16]	@ (8001b84 <HAL_MspInit+0x60>)
  8001b72:	68fb      	ldr	r3, [r7, #12]
  8001b74:	6053      	str	r3, [r2, #4]
+
+  /* USER CODE BEGIN MspInit 1 */
+
+  /* USER CODE END MspInit 1 */
+}
  8001b76:	bf00      	nop
  8001b78:	3714      	adds	r7, #20
  8001b7a:	46bd      	mov	sp, r7
@@ -3283,21 +3771,35 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001b84:	40010000 	.word	0x40010000
 
 08001b88 <HAL_ADC_MspInit>:
+  * This function configures the hardware resources used in this example
+  * @param hadc: ADC handle pointer
+  * @retval None
+  */
+void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
+{
  8001b88:	b580      	push	{r7, lr}
  8001b8a:	b08a      	sub	sp, #40	@ 0x28
  8001b8c:	af00      	add	r7, sp, #0
  8001b8e:	6078      	str	r0, [r7, #4]
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
  8001b90:	f107 0318 	add.w	r3, r7, #24
  8001b94:	2200      	movs	r2, #0
  8001b96:	601a      	str	r2, [r3, #0]
  8001b98:	605a      	str	r2, [r3, #4]
  8001b9a:	609a      	str	r2, [r3, #8]
  8001b9c:	60da      	str	r2, [r3, #12]
+  if(hadc->Instance==ADC1)
  8001b9e:	687b      	ldr	r3, [r7, #4]
  8001ba0:	681b      	ldr	r3, [r3, #0]
  8001ba2:	4a23      	ldr	r2, [pc, #140]	@ (8001c30 <HAL_ADC_MspInit+0xa8>)
  8001ba4:	4293      	cmp	r3, r2
  8001ba6:	d13f      	bne.n	8001c28 <HAL_ADC_MspInit+0xa0>
+  {
+    /* USER CODE BEGIN ADC1_MspInit 0 */
+
+    /* USER CODE END ADC1_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_ADC1_CLK_ENABLE();
  8001ba8:	4b22      	ldr	r3, [pc, #136]	@ (8001c34 <HAL_ADC_MspInit+0xac>)
  8001baa:	699b      	ldr	r3, [r3, #24]
  8001bac:	4a21      	ldr	r2, [pc, #132]	@ (8001c34 <HAL_ADC_MspInit+0xac>)
@@ -3308,6 +3810,8 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001bb8:	f403 7300 	and.w	r3, r3, #512	@ 0x200
  8001bbc:	617b      	str	r3, [r7, #20]
  8001bbe:	697b      	ldr	r3, [r7, #20]
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
  8001bc0:	4b1c      	ldr	r3, [pc, #112]	@ (8001c34 <HAL_ADC_MspInit+0xac>)
  8001bc2:	699b      	ldr	r3, [r3, #24]
  8001bc4:	4a1b      	ldr	r2, [pc, #108]	@ (8001c34 <HAL_ADC_MspInit+0xac>)
@@ -3318,6 +3822,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001bd0:	f003 0304 	and.w	r3, r3, #4
  8001bd4:	613b      	str	r3, [r7, #16]
  8001bd6:	693b      	ldr	r3, [r7, #16]
+    __HAL_RCC_GPIOB_CLK_ENABLE();
  8001bd8:	4b16      	ldr	r3, [pc, #88]	@ (8001c34 <HAL_ADC_MspInit+0xac>)
  8001bda:	699b      	ldr	r3, [r3, #24]
  8001bdc:	4a15      	ldr	r2, [pc, #84]	@ (8001c34 <HAL_ADC_MspInit+0xac>)
@@ -3328,28 +3833,49 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001be8:	f003 0308 	and.w	r3, r3, #8
  8001bec:	60fb      	str	r3, [r7, #12]
  8001bee:	68fb      	ldr	r3, [r7, #12]
+    /**ADC1 GPIO Configuration
+    PA1     ------> ADC1_IN1
+    PB0     ------> ADC1_IN8
+    */
+    GPIO_InitStruct.Pin = ADC_IN_AKB_Pin;
  8001bf0:	2302      	movs	r3, #2
  8001bf2:	61bb      	str	r3, [r7, #24]
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
  8001bf4:	2303      	movs	r3, #3
  8001bf6:	61fb      	str	r3, [r7, #28]
+    HAL_GPIO_Init(ADC_IN_AKB_GPIO_Port, &GPIO_InitStruct);
  8001bf8:	f107 0318 	add.w	r3, r7, #24
  8001bfc:	4619      	mov	r1, r3
  8001bfe:	480e      	ldr	r0, [pc, #56]	@ (8001c38 <HAL_ADC_MspInit+0xb0>)
  8001c00:	f001 fad8 	bl	80031b4 <HAL_GPIO_Init>
+
+    GPIO_InitStruct.Pin = GPIO_PIN_0;
  8001c04:	2301      	movs	r3, #1
  8001c06:	61bb      	str	r3, [r7, #24]
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
  8001c08:	2303      	movs	r3, #3
  8001c0a:	61fb      	str	r3, [r7, #28]
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
  8001c0c:	f107 0318 	add.w	r3, r7, #24
  8001c10:	4619      	mov	r1, r3
  8001c12:	480a      	ldr	r0, [pc, #40]	@ (8001c3c <HAL_ADC_MspInit+0xb4>)
  8001c14:	f001 face 	bl	80031b4 <HAL_GPIO_Init>
+
+    /* ADC1 interrupt Init */
+    HAL_NVIC_SetPriority(ADC1_2_IRQn, 0, 0);
  8001c18:	2200      	movs	r2, #0
  8001c1a:	2100      	movs	r1, #0
  8001c1c:	2012      	movs	r0, #18
  8001c1e:	f001 fa86 	bl	800312e <HAL_NVIC_SetPriority>
+    HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
  8001c22:	2012      	movs	r0, #18
  8001c24:	f001 fa9f 	bl	8003166 <HAL_NVIC_EnableIRQ>
+
+    /* USER CODE END ADC1_MspInit 1 */
+
+  }
+
+}
  8001c28:	bf00      	nop
  8001c2a:	3728      	adds	r7, #40	@ 0x28
  8001c2c:	46bd      	mov	sp, r7
@@ -3360,16 +3886,30 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001c3c:	40010c00 	.word	0x40010c00
 
 08001c40 <HAL_RTC_MspInit>:
+  * This function configures the hardware resources used in this example
+  * @param hrtc: RTC handle pointer
+  * @retval None
+  */
+void HAL_RTC_MspInit(RTC_HandleTypeDef* hrtc)
+{
  8001c40:	b580      	push	{r7, lr}
  8001c42:	b084      	sub	sp, #16
  8001c44:	af00      	add	r7, sp, #0
  8001c46:	6078      	str	r0, [r7, #4]
+  if(hrtc->Instance==RTC)
  8001c48:	687b      	ldr	r3, [r7, #4]
  8001c4a:	681b      	ldr	r3, [r3, #0]
  8001c4c:	4a13      	ldr	r2, [pc, #76]	@ (8001c9c <HAL_RTC_MspInit+0x5c>)
  8001c4e:	4293      	cmp	r3, r2
  8001c50:	d120      	bne.n	8001c94 <HAL_RTC_MspInit+0x54>
+  {
+    /* USER CODE BEGIN RTC_MspInit 0 */
+
+    /* USER CODE END RTC_MspInit 0 */
+    HAL_PWR_EnableBkUpAccess();
  8001c52:	f001 fc73 	bl	800353c <HAL_PWR_EnableBkUpAccess>
+    /* Enable BKP CLK enable for backup registers */
+    __HAL_RCC_BKP_CLK_ENABLE();
  8001c56:	4b12      	ldr	r3, [pc, #72]	@ (8001ca0 <HAL_RTC_MspInit+0x60>)
  8001c58:	69db      	ldr	r3, [r3, #28]
  8001c5a:	4a11      	ldr	r2, [pc, #68]	@ (8001ca0 <HAL_RTC_MspInit+0x60>)
@@ -3380,21 +3920,34 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001c66:	f003 6300 	and.w	r3, r3, #134217728	@ 0x8000000
  8001c6a:	60fb      	str	r3, [r7, #12]
  8001c6c:	68fb      	ldr	r3, [r7, #12]
+    /* Peripheral clock enable */
+    __HAL_RCC_RTC_ENABLE();
  8001c6e:	4b0d      	ldr	r3, [pc, #52]	@ (8001ca4 <HAL_RTC_MspInit+0x64>)
  8001c70:	2201      	movs	r2, #1
  8001c72:	601a      	str	r2, [r3, #0]
+    /* RTC interrupt Init */
+    HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
  8001c74:	2200      	movs	r2, #0
  8001c76:	2100      	movs	r1, #0
  8001c78:	2003      	movs	r0, #3
  8001c7a:	f001 fa58 	bl	800312e <HAL_NVIC_SetPriority>
+    HAL_NVIC_EnableIRQ(RTC_IRQn);
  8001c7e:	2003      	movs	r0, #3
  8001c80:	f001 fa71 	bl	8003166 <HAL_NVIC_EnableIRQ>
+    HAL_NVIC_SetPriority(RTC_Alarm_IRQn, 0, 0);
  8001c84:	2200      	movs	r2, #0
  8001c86:	2100      	movs	r1, #0
  8001c88:	2029      	movs	r0, #41	@ 0x29
  8001c8a:	f001 fa50 	bl	800312e <HAL_NVIC_SetPriority>
+    HAL_NVIC_EnableIRQ(RTC_Alarm_IRQn);
  8001c8e:	2029      	movs	r0, #41	@ 0x29
  8001c90:	f001 fa69 	bl	8003166 <HAL_NVIC_EnableIRQ>
+
+    /* USER CODE END RTC_MspInit 1 */
+
+  }
+
+}
  8001c94:	bf00      	nop
  8001c96:	3710      	adds	r7, #16
  8001c98:	46bd      	mov	sp, r7
@@ -3404,21 +3957,35 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001ca4:	4242043c 	.word	0x4242043c
 
 08001ca8 <HAL_SPI_MspInit>:
+  * This function configures the hardware resources used in this example
+  * @param hspi: SPI handle pointer
+  * @retval None
+  */
+void HAL_SPI_MspInit(SPI_HandleTypeDef* hspi)
+{
  8001ca8:	b580      	push	{r7, lr}
  8001caa:	b088      	sub	sp, #32
  8001cac:	af00      	add	r7, sp, #0
  8001cae:	6078      	str	r0, [r7, #4]
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
  8001cb0:	f107 0310 	add.w	r3, r7, #16
  8001cb4:	2200      	movs	r2, #0
  8001cb6:	601a      	str	r2, [r3, #0]
  8001cb8:	605a      	str	r2, [r3, #4]
  8001cba:	609a      	str	r2, [r3, #8]
  8001cbc:	60da      	str	r2, [r3, #12]
+  if(hspi->Instance==SPI1)
  8001cbe:	687b      	ldr	r3, [r7, #4]
  8001cc0:	681b      	ldr	r3, [r3, #0]
  8001cc2:	4a1b      	ldr	r2, [pc, #108]	@ (8001d30 <HAL_SPI_MspInit+0x88>)
  8001cc4:	4293      	cmp	r3, r2
  8001cc6:	d12f      	bne.n	8001d28 <HAL_SPI_MspInit+0x80>
+  {
+    /* USER CODE BEGIN SPI1_MspInit 0 */
+
+    /* USER CODE END SPI1_MspInit 0 */
+    /* Peripheral clock enable */
+    __HAL_RCC_SPI1_CLK_ENABLE();
  8001cc8:	4b1a      	ldr	r3, [pc, #104]	@ (8001d34 <HAL_SPI_MspInit+0x8c>)
  8001cca:	699b      	ldr	r3, [r3, #24]
  8001ccc:	4a19      	ldr	r2, [pc, #100]	@ (8001d34 <HAL_SPI_MspInit+0x8c>)
@@ -3429,6 +3996,8 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001cd8:	f403 5380 	and.w	r3, r3, #4096	@ 0x1000
  8001cdc:	60fb      	str	r3, [r7, #12]
  8001cde:	68fb      	ldr	r3, [r7, #12]
+
+    __HAL_RCC_GPIOA_CLK_ENABLE();
  8001ce0:	4b14      	ldr	r3, [pc, #80]	@ (8001d34 <HAL_SPI_MspInit+0x8c>)
  8001ce2:	699b      	ldr	r3, [r3, #24]
  8001ce4:	4a13      	ldr	r2, [pc, #76]	@ (8001d34 <HAL_SPI_MspInit+0x8c>)
@@ -3439,26 +4008,46 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001cf0:	f003 0304 	and.w	r3, r3, #4
  8001cf4:	60bb      	str	r3, [r7, #8]
  8001cf6:	68bb      	ldr	r3, [r7, #8]
+    /**SPI1 GPIO Configuration
+    PA5     ------> SPI1_SCK
+    PA6     ------> SPI1_MISO
+    PA7     ------> SPI1_MOSI
+    */
+    GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_7;
  8001cf8:	23a0      	movs	r3, #160	@ 0xa0
  8001cfa:	613b      	str	r3, [r7, #16]
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
  8001cfc:	2302      	movs	r3, #2
  8001cfe:	617b      	str	r3, [r7, #20]
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
  8001d00:	2303      	movs	r3, #3
  8001d02:	61fb      	str	r3, [r7, #28]
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
  8001d04:	f107 0310 	add.w	r3, r7, #16
  8001d08:	4619      	mov	r1, r3
  8001d0a:	480b      	ldr	r0, [pc, #44]	@ (8001d38 <HAL_SPI_MspInit+0x90>)
  8001d0c:	f001 fa52 	bl	80031b4 <HAL_GPIO_Init>
+
+    GPIO_InitStruct.Pin = GPIO_PIN_6;
  8001d10:	2340      	movs	r3, #64	@ 0x40
  8001d12:	613b      	str	r3, [r7, #16]
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
  8001d14:	2300      	movs	r3, #0
  8001d16:	617b      	str	r3, [r7, #20]
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
  8001d18:	2300      	movs	r3, #0
  8001d1a:	61bb      	str	r3, [r7, #24]
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
  8001d1c:	f107 0310 	add.w	r3, r7, #16
  8001d20:	4619      	mov	r1, r3
  8001d22:	4805      	ldr	r0, [pc, #20]	@ (8001d38 <HAL_SPI_MspInit+0x90>)
  8001d24:	f001 fa46 	bl	80031b4 <HAL_GPIO_Init>
+
+    /* USER CODE END SPI1_MspInit 1 */
+
+  }
+
+}
  8001d28:	bf00      	nop
  8001d2a:	3720      	adds	r7, #32
  8001d2c:	46bd      	mov	sp, r7
@@ -3468,80 +4057,194 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001d38:	40010800 	.word	0x40010800
 
 08001d3c <NMI_Handler>:
+/******************************************************************************/
+/**
+  * @brief This function handles Non maskable interrupt.
+  */
+void NMI_Handler(void)
+{
  8001d3c:	b480      	push	{r7}
  8001d3e:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
+
+  /* USER CODE END NonMaskableInt_IRQn 0 */
+  /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
+   while (1)
  8001d40:	bf00      	nop
  8001d42:	e7fd      	b.n	8001d40 <NMI_Handler+0x4>
 
 08001d44 <HardFault_Handler>:
+
+/**
+  * @brief This function handles Hard fault interrupt.
+  */
+void HardFault_Handler(void)
+{
  8001d44:	b480      	push	{r7}
  8001d46:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN HardFault_IRQn 0 */
+
+  /* USER CODE END HardFault_IRQn 0 */
+  while (1)
  8001d48:	bf00      	nop
  8001d4a:	e7fd      	b.n	8001d48 <HardFault_Handler+0x4>
 
 08001d4c <MemManage_Handler>:
+
+/**
+  * @brief This function handles Memory management fault.
+  */
+void MemManage_Handler(void)
+{
  8001d4c:	b480      	push	{r7}
  8001d4e:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN MemoryManagement_IRQn 0 */
+
+  /* USER CODE END MemoryManagement_IRQn 0 */
+  while (1)
  8001d50:	bf00      	nop
  8001d52:	e7fd      	b.n	8001d50 <MemManage_Handler+0x4>
 
 08001d54 <BusFault_Handler>:
+
+/**
+  * @brief This function handles Prefetch fault, memory access fault.
+  */
+void BusFault_Handler(void)
+{
  8001d54:	b480      	push	{r7}
  8001d56:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN BusFault_IRQn 0 */
+
+  /* USER CODE END BusFault_IRQn 0 */
+  while (1)
  8001d58:	bf00      	nop
  8001d5a:	e7fd      	b.n	8001d58 <BusFault_Handler+0x4>
 
 08001d5c <UsageFault_Handler>:
+
+/**
+  * @brief This function handles Undefined instruction or illegal state.
+  */
+void UsageFault_Handler(void)
+{
  8001d5c:	b480      	push	{r7}
  8001d5e:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN UsageFault_IRQn 0 */
+
+  /* USER CODE END UsageFault_IRQn 0 */
+  while (1)
  8001d60:	bf00      	nop
  8001d62:	e7fd      	b.n	8001d60 <UsageFault_Handler+0x4>
 
 08001d64 <SVC_Handler>:
+
+/**
+  * @brief This function handles System service call via SWI instruction.
+  */
+void SVC_Handler(void)
+{
  8001d64:	b480      	push	{r7}
  8001d66:	af00      	add	r7, sp, #0
+
+  /* USER CODE END SVCall_IRQn 0 */
+  /* USER CODE BEGIN SVCall_IRQn 1 */
+
+  /* USER CODE END SVCall_IRQn 1 */
+}
  8001d68:	bf00      	nop
  8001d6a:	46bd      	mov	sp, r7
  8001d6c:	bc80      	pop	{r7}
  8001d6e:	4770      	bx	lr
 
 08001d70 <DebugMon_Handler>:
+
+/**
+  * @brief This function handles Debug monitor.
+  */
+void DebugMon_Handler(void)
+{
  8001d70:	b480      	push	{r7}
  8001d72:	af00      	add	r7, sp, #0
+
+  /* USER CODE END DebugMonitor_IRQn 0 */
+  /* USER CODE BEGIN DebugMonitor_IRQn 1 */
+
+  /* USER CODE END DebugMonitor_IRQn 1 */
+}
  8001d74:	bf00      	nop
  8001d76:	46bd      	mov	sp, r7
  8001d78:	bc80      	pop	{r7}
  8001d7a:	4770      	bx	lr
 
 08001d7c <PendSV_Handler>:
+
+/**
+  * @brief This function handles Pendable request for system service.
+  */
+void PendSV_Handler(void)
+{
  8001d7c:	b480      	push	{r7}
  8001d7e:	af00      	add	r7, sp, #0
+
+  /* USER CODE END PendSV_IRQn 0 */
+  /* USER CODE BEGIN PendSV_IRQn 1 */
+
+  /* USER CODE END PendSV_IRQn 1 */
+}
  8001d80:	bf00      	nop
  8001d82:	46bd      	mov	sp, r7
  8001d84:	bc80      	pop	{r7}
  8001d86:	4770      	bx	lr
 
 08001d88 <SysTick_Handler>:
+
+/**
+  * @brief This function handles System tick timer.
+  */
+void SysTick_Handler(void)
+{
  8001d88:	b580      	push	{r7, lr}
  8001d8a:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+
+  /* USER CODE END SysTick_IRQn 0 */
+  HAL_IncTick();
  8001d8c:	f000 fa04 	bl	8002198 <HAL_IncTick>
+  /* USER CODE BEGIN SysTick_IRQn 1 */
+  HAL_SYSTICK_IRQHandler();
  8001d90:	f001 fa03 	bl	800319a <HAL_SYSTICK_IRQHandler>
+  /* USER CODE END SysTick_IRQn 1 */
+}
  8001d94:	bf00      	nop
  8001d96:	bd80      	pop	{r7, pc}
 
 08001d98 <RTC_IRQHandler>:
+
+/**
+  * @brief This function handles RTC global interrupt.
+  */
+void RTC_IRQHandler(void)
+{
  8001d98:	b580      	push	{r7, lr}
  8001d9a:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN RTC_IRQn 0 */
+	// User Code for Project SWT - Licensed under GNU AGPLv3
+	// Copyright (C) 2025 Ch-Tima
+	if (RTC->CRL & RTC_CRL_SECF)
  8001d9c:	4b0b      	ldr	r3, [pc, #44]	@ (8001dcc <RTC_IRQHandler+0x34>)
  8001d9e:	685b      	ldr	r3, [r3, #4]
  8001da0:	f003 0301 	and.w	r3, r3, #1
  8001da4:	2b00      	cmp	r3, #0
  8001da6:	d00c      	beq.n	8001dc2 <RTC_IRQHandler+0x2a>
+			{
+		     RTC->CRL &= ~RTC_CRL_SECF;    //сбросить флаг (обязательно!!!)
  8001da8:	4b08      	ldr	r3, [pc, #32]	@ (8001dcc <RTC_IRQHandler+0x34>)
  8001daa:	685b      	ldr	r3, [r3, #4]
  8001dac:	4a07      	ldr	r2, [pc, #28]	@ (8001dcc <RTC_IRQHandler+0x34>)
  8001dae:	f023 0301 	bic.w	r3, r3, #1
  8001db2:	6053      	str	r3, [r2, #4]
+		     rtc_tick++;
  8001db4:	4b06      	ldr	r3, [pc, #24]	@ (8001dd0 <RTC_IRQHandler+0x38>)
  8001db6:	781b      	ldrb	r3, [r3, #0]
  8001db8:	b2db      	uxtb	r3, r3
@@ -3549,8 +4252,15 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001dbc:	b2da      	uxtb	r2, r3
  8001dbe:	4b04      	ldr	r3, [pc, #16]	@ (8001dd0 <RTC_IRQHandler+0x38>)
  8001dc0:	701a      	strb	r2, [r3, #0]
+		  }
+  /* USER CODE END RTC_IRQn 0 */
+  HAL_RTCEx_RTCIRQHandler(&hrtc);
  8001dc2:	4804      	ldr	r0, [pc, #16]	@ (8001dd4 <RTC_IRQHandler+0x3c>)
  8001dc4:	f002 ff08 	bl	8004bd8 <HAL_RTCEx_RTCIRQHandler>
+  /* USER CODE BEGIN RTC_IRQn 1 */
+
+  /* USER CODE END RTC_IRQn 1 */
+}
  8001dc8:	bf00      	nop
  8001dca:	bd80      	pop	{r7, pc}
  8001dcc:	40002800 	.word	0x40002800
@@ -3558,19 +4268,31 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001dd4:	2000093c 	.word	0x2000093c
 
 08001dd8 <ADC1_2_IRQHandler>:
+
+/**
+  * @brief This function handles ADC1 and ADC2 global interrupts.
+  */
+void ADC1_2_IRQHandler(void)
+{
  8001dd8:	b580      	push	{r7, lr}
  8001dda:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN ADC1_2_IRQn 0 */
+	// User Code for Project SWT - Licensed under GNU AGPLv3
+	// Copyright (C) 2025 Ch-Tima
+	if(hadc1.Instance == ADC1){
  8001ddc:	4b13      	ldr	r3, [pc, #76]	@ (8001e2c <ADC1_2_IRQHandler+0x54>)
  8001dde:	681b      	ldr	r3, [r3, #0]
  8001de0:	4a13      	ldr	r2, [pc, #76]	@ (8001e30 <ADC1_2_IRQHandler+0x58>)
  8001de2:	4293      	cmp	r3, r2
  8001de4:	d11c      	bne.n	8001e20 <ADC1_2_IRQHandler+0x48>
+		_vref = HAL_ADC_GetValue(&hadc1);
  8001de6:	4811      	ldr	r0, [pc, #68]	@ (8001e2c <ADC1_2_IRQHandler+0x54>)
  8001de8:	f000 fbd8 	bl	800259c <HAL_ADC_GetValue>
  8001dec:	4603      	mov	r3, r0
  8001dee:	b29a      	uxth	r2, r3
  8001df0:	4b10      	ldr	r3, [pc, #64]	@ (8001e34 <ADC1_2_IRQHandler+0x5c>)
  8001df2:	801a      	strh	r2, [r3, #0]
+		adc1_value_battery = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_1);
  8001df4:	2101      	movs	r1, #1
  8001df6:	480d      	ldr	r0, [pc, #52]	@ (8001e2c <ADC1_2_IRQHandler+0x54>)
  8001df8:	f000 fef0 	bl	8002bdc <HAL_ADCEx_InjectedGetValue>
@@ -3578,6 +4300,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001dfe:	b29a      	uxth	r2, r3
  8001e00:	4b0d      	ldr	r3, [pc, #52]	@ (8001e38 <ADC1_2_IRQHandler+0x60>)
  8001e02:	801a      	strh	r2, [r3, #0]
+		adc1_value_thermistor = HAL_ADCEx_InjectedGetValue(&hadc1, ADC_INJECTED_RANK_2);
  8001e04:	2102      	movs	r1, #2
  8001e06:	4809      	ldr	r0, [pc, #36]	@ (8001e2c <ADC1_2_IRQHandler+0x54>)
  8001e08:	f000 fee8 	bl	8002bdc <HAL_ADCEx_InjectedGetValue>
@@ -3585,13 +4308,22 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001e0e:	b29a      	uxth	r2, r3
  8001e10:	4b0a      	ldr	r3, [pc, #40]	@ (8001e3c <ADC1_2_IRQHandler+0x64>)
  8001e12:	801a      	strh	r2, [r3, #0]
+		HAL_ADC_Stop_IT(&hadc1);
  8001e14:	4805      	ldr	r0, [pc, #20]	@ (8001e2c <ADC1_2_IRQHandler+0x54>)
  8001e16:	f000 fb8d 	bl	8002534 <HAL_ADC_Stop_IT>
+		adc1_tick=1;
  8001e1a:	4b09      	ldr	r3, [pc, #36]	@ (8001e40 <ADC1_2_IRQHandler+0x68>)
  8001e1c:	2201      	movs	r2, #1
  8001e1e:	701a      	strb	r2, [r3, #0]
+	}
+  /* USER CODE END ADC1_2_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
  8001e20:	4802      	ldr	r0, [pc, #8]	@ (8001e2c <ADC1_2_IRQHandler+0x54>)
  8001e22:	f000 fbc7 	bl	80025b4 <HAL_ADC_IRQHandler>
+  /* USER CODE BEGIN ADC1_2_IRQn 1 */
+
+  /* USER CODE END ADC1_2_IRQn 1 */
+}
  8001e26:	bf00      	nop
  8001e28:	bd80      	pop	{r7, pc}
  8001e2a:	bf00      	nop
@@ -3603,31 +4335,56 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001e40:	200009b4 	.word	0x200009b4
 
 08001e44 <RTC_Alarm_IRQHandler>:
+
+/**
+  * @brief This function handles RTC alarm interrupt through EXTI line 17.
+  */
+void RTC_Alarm_IRQHandler(void)
+{
  8001e44:	b580      	push	{r7, lr}
  8001e46:	af00      	add	r7, sp, #0
+  /* USER CODE BEGIN RTC_Alarm_IRQn 0 */
+
+  /* USER CODE END RTC_Alarm_IRQn 0 */
+  HAL_RTC_AlarmIRQHandler(&hrtc);
  8001e48:	4802      	ldr	r0, [pc, #8]	@ (8001e54 <RTC_Alarm_IRQHandler+0x10>)
  8001e4a:	f002 fbf1 	bl	8004630 <HAL_RTC_AlarmIRQHandler>
+  /* USER CODE BEGIN RTC_Alarm_IRQn 1 */
+
+  /* USER CODE END RTC_Alarm_IRQn 1 */
+}
  8001e4e:	bf00      	nop
  8001e50:	bd80      	pop	{r7, pc}
  8001e52:	bf00      	nop
  8001e54:	2000093c 	.word	0x2000093c
 
 08001e58 <UI_Time_Init>:
+uint8_t t = 0; // 0 - hours | 1 - minutes | 2 - sec
+
+char timeStr[8] = {0};
+extern RTC_TimeTypeDef clkTime;
+
+void UI_Time_Init(){
  8001e58:	b580      	push	{r7, lr}
  8001e5a:	af00      	add	r7, sp, #0
+    hours = clkTime.Hours;
  8001e5c:	4b07      	ldr	r3, [pc, #28]	@ (8001e7c <UI_Time_Init+0x24>)
  8001e5e:	781a      	ldrb	r2, [r3, #0]
  8001e60:	4b07      	ldr	r3, [pc, #28]	@ (8001e80 <UI_Time_Init+0x28>)
  8001e62:	701a      	strb	r2, [r3, #0]
+    minutes = clkTime.Minutes;
  8001e64:	4b05      	ldr	r3, [pc, #20]	@ (8001e7c <UI_Time_Init+0x24>)
  8001e66:	785a      	ldrb	r2, [r3, #1]
  8001e68:	4b06      	ldr	r3, [pc, #24]	@ (8001e84 <UI_Time_Init+0x2c>)
  8001e6a:	701a      	strb	r2, [r3, #0]
+    sec = clkTime.Seconds;
  8001e6c:	4b03      	ldr	r3, [pc, #12]	@ (8001e7c <UI_Time_Init+0x24>)
  8001e6e:	789a      	ldrb	r2, [r3, #2]
  8001e70:	4b05      	ldr	r3, [pc, #20]	@ (8001e88 <UI_Time_Init+0x30>)
  8001e72:	701a      	strb	r2, [r3, #0]
+    update_timeStr();
  8001e74:	f000 f8be 	bl	8001ff4 <update_timeStr>
+}
  8001e78:	bf00      	nop
  8001e7a:	bd80      	pop	{r7, pc}
  8001e7c:	200009ac 	.word	0x200009ac
@@ -3636,6 +4393,8 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001e88:	200009be 	.word	0x200009be
 
 08001e8c <UI_Time_Draw>:
+
+void UI_Time_Draw(ButtonStatus_t btnup_status, ButtonStatus_t btndown_status){
  8001e8c:	b580      	push	{r7, lr}
  8001e8e:	b084      	sub	sp, #16
  8001e90:	af00      	add	r7, sp, #0
@@ -3644,9 +4403,15 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001e96:	71fb      	strb	r3, [r7, #7]
  8001e98:	4613      	mov	r3, r2
  8001e9a:	71bb      	strb	r3, [r7, #6]
+
+    uint8_t *number;
+
+    //SAVE
+    if(btnup_status == BUTTON_HOLD){
  8001e9c:	79fb      	ldrb	r3, [r7, #7]
  8001e9e:	2b03      	cmp	r3, #3
  8001ea0:	d10c      	bne.n	8001ebc <UI_Time_Draw+0x30>
+        Update_RTCTime(hours, minutes, sec);
  8001ea2:	4b4d      	ldr	r3, [pc, #308]	@ (8001fd8 <UI_Time_Draw+0x14c>)
  8001ea4:	781b      	ldrb	r3, [r3, #0]
  8001ea6:	4a4d      	ldr	r2, [pc, #308]	@ (8001fdc <UI_Time_Draw+0x150>)
@@ -3655,34 +4420,55 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001eac:	7812      	ldrb	r2, [r2, #0]
  8001eae:	4618      	mov	r0, r3
  8001eb0:	f7fe fe60 	bl	8000b74 <Update_RTCTime>
+        //LCD_DrawText(64, 48, "$Save", 0);
+        UI_SetView(MAIN_VIEW);
  8001eb4:	200a      	movs	r0, #10
  8001eb6:	f7ff f8e9 	bl	800108c <UI_SetView>
+        return;
  8001eba:	e089      	b.n	8001fd0 <UI_Time_Draw+0x144>
+    }
+    //NOT SAVE (BACK TO MAIN)
+    if(btndown_status == BUTTON_HOLD){
  8001ebc:	79bb      	ldrb	r3, [r7, #6]
  8001ebe:	2b03      	cmp	r3, #3
  8001ec0:	d103      	bne.n	8001eca <UI_Time_Draw+0x3e>
+        UI_SetView(MAIN_VIEW);
  8001ec2:	200a      	movs	r0, #10
  8001ec4:	f7ff f8e2 	bl	800108c <UI_SetView>
+        return;
  8001ec8:	e082      	b.n	8001fd0 <UI_Time_Draw+0x144>
+    }
+
+    if(t == 0){
  8001eca:	4b46      	ldr	r3, [pc, #280]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001ecc:	781b      	ldrb	r3, [r3, #0]
  8001ece:	2b00      	cmp	r3, #0
  8001ed0:	d102      	bne.n	8001ed8 <UI_Time_Draw+0x4c>
+        number = &hours;
  8001ed2:	4b41      	ldr	r3, [pc, #260]	@ (8001fd8 <UI_Time_Draw+0x14c>)
  8001ed4:	60fb      	str	r3, [r7, #12]
  8001ed6:	e008      	b.n	8001eea <UI_Time_Draw+0x5e>
+    }else if(t == 1){
  8001ed8:	4b42      	ldr	r3, [pc, #264]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001eda:	781b      	ldrb	r3, [r3, #0]
  8001edc:	2b01      	cmp	r3, #1
  8001ede:	d102      	bne.n	8001ee6 <UI_Time_Draw+0x5a>
+        number = &minutes;
  8001ee0:	4b3e      	ldr	r3, [pc, #248]	@ (8001fdc <UI_Time_Draw+0x150>)
  8001ee2:	60fb      	str	r3, [r7, #12]
  8001ee4:	e001      	b.n	8001eea <UI_Time_Draw+0x5e>
+    }else{
+        number = &sec;
  8001ee6:	4b3e      	ldr	r3, [pc, #248]	@ (8001fe0 <UI_Time_Draw+0x154>)
  8001ee8:	60fb      	str	r3, [r7, #12]
+    }
+
+    //change the scale
+    if(btnup_status == BUTTON_LONG){
  8001eea:	79fb      	ldrb	r3, [r7, #7]
  8001eec:	2b02      	cmp	r3, #2
  8001eee:	d10e      	bne.n	8001f0e <UI_Time_Draw+0x82>
+        t = (t + 1) % 3;
  8001ef0:	4b3c      	ldr	r3, [pc, #240]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001ef2:	781b      	ldrb	r3, [r3, #0]
  8001ef4:	1c5a      	adds	r2, r3, #1
@@ -3697,9 +4483,13 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001f08:	b2ca      	uxtb	r2, r1
  8001f0a:	4b36      	ldr	r3, [pc, #216]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001f0c:	701a      	strb	r2, [r3, #0]
+    }
+
+    if(btndown_status == BUTTON_LONG){
  8001f0e:	79bb      	ldrb	r3, [r7, #6]
  8001f10:	2b02      	cmp	r3, #2
  8001f12:	d10b      	bne.n	8001f2c <UI_Time_Draw+0xa0>
+        t = (t == 0) ? 2 : t - 1;
  8001f14:	4b33      	ldr	r3, [pc, #204]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001f16:	781b      	ldrb	r3, [r3, #0]
  8001f18:	2b00      	cmp	r3, #0
@@ -3712,15 +4502,20 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001f26:	2302      	movs	r3, #2
  8001f28:	4a2e      	ldr	r2, [pc, #184]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001f2a:	7013      	strb	r3, [r2, #0]
+    }
+    //change the value
+    if(btnup_status == BUTTON_SHORT){
  8001f2c:	79fb      	ldrb	r3, [r7, #7]
  8001f2e:	2b01      	cmp	r3, #1
  8001f30:	d118      	bne.n	8001f64 <UI_Time_Draw+0xd8>
+        (*number)++;
  8001f32:	68fb      	ldr	r3, [r7, #12]
  8001f34:	781b      	ldrb	r3, [r3, #0]
  8001f36:	3301      	adds	r3, #1
  8001f38:	b2da      	uxtb	r2, r3
  8001f3a:	68fb      	ldr	r3, [r7, #12]
  8001f3c:	701a      	strb	r2, [r3, #0]
+        if(t == 0 && *number > 23){
  8001f3e:	4b29      	ldr	r3, [pc, #164]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001f40:	781b      	ldrb	r3, [r3, #0]
  8001f42:	2b00      	cmp	r3, #0
@@ -3729,24 +4524,34 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001f48:	781b      	ldrb	r3, [r3, #0]
  8001f4a:	2b17      	cmp	r3, #23
  8001f4c:	d903      	bls.n	8001f56 <UI_Time_Draw+0xca>
+            *number = 0;
  8001f4e:	68fb      	ldr	r3, [r7, #12]
  8001f50:	2200      	movs	r2, #0
  8001f52:	701a      	strb	r2, [r3, #0]
  8001f54:	e006      	b.n	8001f64 <UI_Time_Draw+0xd8>
+        }
+        else if(*number > 59){
  8001f56:	68fb      	ldr	r3, [r7, #12]
  8001f58:	781b      	ldrb	r3, [r3, #0]
  8001f5a:	2b3b      	cmp	r3, #59	@ 0x3b
  8001f5c:	d902      	bls.n	8001f64 <UI_Time_Draw+0xd8>
+            *number = 0;
  8001f5e:	68fb      	ldr	r3, [r7, #12]
  8001f60:	2200      	movs	r2, #0
  8001f62:	701a      	strb	r2, [r3, #0]
+        }
+    }
+
+    if(btndown_status == BUTTON_SHORT){
  8001f64:	79bb      	ldrb	r3, [r7, #6]
  8001f66:	2b01      	cmp	r3, #1
  8001f68:	d113      	bne.n	8001f92 <UI_Time_Draw+0x106>
+        if(*number == 0){
  8001f6a:	68fb      	ldr	r3, [r7, #12]
  8001f6c:	781b      	ldrb	r3, [r3, #0]
  8001f6e:	2b00      	cmp	r3, #0
  8001f70:	d109      	bne.n	8001f86 <UI_Time_Draw+0xfa>
+            *number = (t == 0) ? 23 : 59;
  8001f72:	4b1c      	ldr	r3, [pc, #112]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001f74:	781b      	ldrb	r3, [r3, #0]
  8001f76:	2b00      	cmp	r3, #0
@@ -3757,23 +4562,32 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001f80:	68fb      	ldr	r3, [r7, #12]
  8001f82:	701a      	strb	r2, [r3, #0]
  8001f84:	e005      	b.n	8001f92 <UI_Time_Draw+0x106>
+        }else (*number)--;
  8001f86:	68fb      	ldr	r3, [r7, #12]
  8001f88:	781b      	ldrb	r3, [r3, #0]
  8001f8a:	3b01      	subs	r3, #1
  8001f8c:	b2da      	uxtb	r2, r3
  8001f8e:	68fb      	ldr	r3, [r7, #12]
  8001f90:	701a      	strb	r2, [r3, #0]
+    }
+
+
+    update_timeStr();
  8001f92:	f000 f82f 	bl	8001ff4 <update_timeStr>
+
+    LCD_DrawText(4, 4, "SETUP_TIME:", 0);
  8001f96:	2300      	movs	r3, #0
  8001f98:	4a14      	ldr	r2, [pc, #80]	@ (8001fec <UI_Time_Draw+0x160>)
  8001f9a:	2104      	movs	r1, #4
  8001f9c:	2004      	movs	r0, #4
  8001f9e:	f7ff faf9 	bl	8001594 <LCD_DrawText>
+    LCD_DrawText(8, 24, timeStr, 1);
  8001fa2:	2301      	movs	r3, #1
  8001fa4:	4a12      	ldr	r2, [pc, #72]	@ (8001ff0 <UI_Time_Draw+0x164>)
  8001fa6:	2118      	movs	r1, #24
  8001fa8:	2008      	movs	r0, #8
  8001faa:	f7ff faf3 	bl	8001594 <LCD_DrawText>
+    LCD_DrawCharX2(15*(t*2+1)+(15*t), 40, '^');
  8001fae:	4b0d      	ldr	r3, [pc, #52]	@ (8001fe4 <UI_Time_Draw+0x158>)
  8001fb0:	781b      	ldrb	r3, [r3, #0]
  8001fb2:	005b      	lsls	r3, r3, #1
@@ -3790,6 +4604,8 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001fc8:	2128      	movs	r1, #40	@ 0x28
  8001fca:	4618      	mov	r0, r3
  8001fcc:	f7ff fa6c 	bl	80014a8 <LCD_DrawCharX2>
+
+}
  8001fd0:	3710      	adds	r7, #16
  8001fd2:	46bd      	mov	sp, r7
  8001fd4:	bd80      	pop	{r7, pc}
@@ -3803,8 +4619,11 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8001ff0:	200009c0 	.word	0x200009c0
 
 08001ff4 <update_timeStr>:
+
+void update_timeStr(){
  8001ff4:	b480      	push	{r7}
  8001ff6:	af00      	add	r7, sp, #0
+    timeStr[0] = '0' + hours/10;
  8001ff8:	4b2d      	ldr	r3, [pc, #180]	@ (80020b0 <update_timeStr+0xbc>)
  8001ffa:	781b      	ldrb	r3, [r3, #0]
  8001ffc:	4a2d      	ldr	r2, [pc, #180]	@ (80020b4 <update_timeStr+0xc0>)
@@ -3815,6 +4634,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8002008:	b2da      	uxtb	r2, r3
  800200a:	4b2b      	ldr	r3, [pc, #172]	@ (80020b8 <update_timeStr+0xc4>)
  800200c:	701a      	strb	r2, [r3, #0]
+    timeStr[1] = '0' + hours % 10;
  800200e:	4b28      	ldr	r3, [pc, #160]	@ (80020b0 <update_timeStr+0xbc>)
  8002010:	781a      	ldrb	r2, [r3, #0]
  8002012:	4b28      	ldr	r3, [pc, #160]	@ (80020b4 <update_timeStr+0xc0>)
@@ -3830,9 +4650,11 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8002028:	b2da      	uxtb	r2, r3
  800202a:	4b23      	ldr	r3, [pc, #140]	@ (80020b8 <update_timeStr+0xc4>)
  800202c:	705a      	strb	r2, [r3, #1]
+    timeStr[2] = ':';
  800202e:	4b22      	ldr	r3, [pc, #136]	@ (80020b8 <update_timeStr+0xc4>)
  8002030:	223a      	movs	r2, #58	@ 0x3a
  8002032:	709a      	strb	r2, [r3, #2]
+    timeStr[3] = '0' + minutes/10;
  8002034:	4b21      	ldr	r3, [pc, #132]	@ (80020bc <update_timeStr+0xc8>)
  8002036:	781b      	ldrb	r3, [r3, #0]
  8002038:	4a1e      	ldr	r2, [pc, #120]	@ (80020b4 <update_timeStr+0xc0>)
@@ -3843,6 +4665,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8002044:	b2da      	uxtb	r2, r3
  8002046:	4b1c      	ldr	r3, [pc, #112]	@ (80020b8 <update_timeStr+0xc4>)
  8002048:	70da      	strb	r2, [r3, #3]
+    timeStr[4] = '0' + minutes % 10;
  800204a:	4b1c      	ldr	r3, [pc, #112]	@ (80020bc <update_timeStr+0xc8>)
  800204c:	781a      	ldrb	r2, [r3, #0]
  800204e:	4b19      	ldr	r3, [pc, #100]	@ (80020b4 <update_timeStr+0xc0>)
@@ -3858,9 +4681,11 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8002064:	b2da      	uxtb	r2, r3
  8002066:	4b14      	ldr	r3, [pc, #80]	@ (80020b8 <update_timeStr+0xc4>)
  8002068:	711a      	strb	r2, [r3, #4]
+    timeStr[5] = ':';
  800206a:	4b13      	ldr	r3, [pc, #76]	@ (80020b8 <update_timeStr+0xc4>)
  800206c:	223a      	movs	r2, #58	@ 0x3a
  800206e:	715a      	strb	r2, [r3, #5]
+    timeStr[6] = '0' + sec/10;
  8002070:	4b13      	ldr	r3, [pc, #76]	@ (80020c0 <update_timeStr+0xcc>)
  8002072:	781b      	ldrb	r3, [r3, #0]
  8002074:	4a0f      	ldr	r2, [pc, #60]	@ (80020b4 <update_timeStr+0xc0>)
@@ -3871,6 +4696,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  8002080:	b2da      	uxtb	r2, r3
  8002082:	4b0d      	ldr	r3, [pc, #52]	@ (80020b8 <update_timeStr+0xc4>)
  8002084:	719a      	strb	r2, [r3, #6]
+    timeStr[7] = '0' + sec % 10;
  8002086:	4b0e      	ldr	r3, [pc, #56]	@ (80020c0 <update_timeStr+0xcc>)
  8002088:	781a      	ldrb	r2, [r3, #0]
  800208a:	4b0a      	ldr	r3, [pc, #40]	@ (80020b4 <update_timeStr+0xc0>)
@@ -3886,6 +4712,7 @@ __STATIC_FORCEINLINE void __disable_irq(void)
  80020a0:	b2da      	uxtb	r2, r3
  80020a2:	4b05      	ldr	r3, [pc, #20]	@ (80020b8 <update_timeStr+0xc4>)
  80020a4:	71da      	strb	r2, [r3, #7]
+}
  80020a6:	bf00      	nop
  80020a8:	46bd      	mov	sp, r7
  80020aa:	bc80      	pop	{r7}
