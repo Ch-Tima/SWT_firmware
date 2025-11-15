@@ -1,0 +1,5 @@
+../Core/Src/UIManager.c:62:6:UI_Init	1
+../Core/Src/UIManager.c:67:6:UI_Update	22
+../Core/Src/UIManager.c:166:6:UI_SetView	1
+../Core/Src/UIManager.c:174:6:UI_UpdateDataFromRTC	4
+../Core/Src/UIManager.c:184:6:UI_UpdateDataFromADC	1

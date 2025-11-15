@@ -1,3 +1,0 @@
-../Core/Src/RTCManager.c:14:6:Get_Time_Now	1
-../Core/Src/RTCManager.c:27:6:Get_Date_Now	6
-../Core/Src/RTCManager.c:62:6:Update_RTCTime	5

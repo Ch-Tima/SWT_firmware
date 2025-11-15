@@ -1,0 +1,4 @@
+../Core/Src/Utils.c:22:6:floatToCharArr	1
+../Core/Src/Utils.c:26:6:uint16ToCharArrEx	4
+../Core/Src/Utils.c:50:6:uint16ToCharArr	1
+../Core/Src/Utils.c:54:6:floatToCharArrEx	5

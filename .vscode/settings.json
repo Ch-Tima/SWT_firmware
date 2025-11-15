@@ -1,18 +1,12 @@
 {
     "files.associations": {
-        "thermistor.h": "c",
-        "main.h": "c",
-        "rtcmanager.h": "c",
-        "stm32f1xx_hal.h": "c",
-        "stm32f103x6.h": "c",
         "buttonmanager.h": "c",
-        "stdint.h": "c",
+        "display.h": "c",
         "uimanager.h": "c",
         "utils.h": "c",
-        "stdbool.h": "c",
-        "ui_settime.h": "c",
-        "cstdint": "c",
-        "random": "c",
-        "display.h": "c"
+        "thermistor.h": "c",
+        "rtcmanager.h": "c",
+        "battery.h": "c",
+        "ui_settime.h": "c"
     }
 }

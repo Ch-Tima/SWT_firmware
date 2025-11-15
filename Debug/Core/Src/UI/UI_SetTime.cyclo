@@ -1,3 +1,0 @@
-../Core/Src/UI/UI_SetTime.c:20:6:UI_Time_Init	1
-../Core/Src/UI/UI_SetTime.c:27:6:UI_Time_Draw	15
-../Core/Src/UI/UI_SetTime.c:86:6:update_timeStr	1

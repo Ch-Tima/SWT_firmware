@@ -1,0 +1,2 @@
+../Core/Src/Battery.c:21:7:getVBat	16	static
+../Core/Src/Battery.c:25:7:getBatteryLevel	16	static
