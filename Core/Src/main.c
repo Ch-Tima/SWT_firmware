@@ -25,7 +25,7 @@
 #include "RTCManager.h"
 #include "Thermistor.h"
 #include "Battery.h"
-#include <stdio.h>
+#include "UIManager.h"
 #include <math.h>
 /* USER CODE END Includes */
 
@@ -52,18 +52,17 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
-uint8_t rtc_tick = 0x0;
-uint8_t adc1_tick = 0x0;
 
+//RTC
+uint8_t rtc_tick = 0x0;
+RTC_TimeTypeDef clkTime;
+RTC_DateTypeDef clkDate;
+
+//ADC
+uint8_t adc1_tick = 0x0;
 uint16_t _vref = 0;
 uint16_t adc1_value_battery = 0;
 uint16_t adc1_value_thermistor = 0;
-
-float vbat = 0;
-uint16_t battery_level = 0;
-
-RTC_TimeTypeDef clkTime;
-RTC_DateTypeDef clkDate;
 
 /* USER CODE END PV */
 
@@ -74,8 +73,7 @@ static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_ADC1_Init(void);
 /* USER CODE BEGIN PFP */
-void floatToCharArr(char *buf, float value);
-void uint16ToCharArr(char *buf, uint16_t value);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -119,60 +117,30 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_ADCEx_Calibration_Start(&hadc1);//калебровка
   LCD_Init();
+  UI_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char timeStr[9];
-  char dateStr[13] = {0}; //WWW DD/MM/YY
-  char batStr[8] = {0};
-  char vbatStr[8] = {0};
-  uint8_t dataFormat = 0b1111;//YYMMDDWW
-  char tempC[16];
-
-  Get_Time_Now(timeStr, &clkTime);
-  Get_Date_Now(dateStr, dataFormat, &clkDate);
   HAL_ADC_Start_IT(&hadc1);
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  LCD_Clear();
 
-	  if (rtc_tick) {
-	      rtc_tick = 0;
-	      Get_Time_Now(timeStr, &clkTime);
-		  if(clkTime.Hours == 0x00 && clkTime.Minutes == 0x00 && (clkTime.Seconds == 0x00)){
-			  Get_Date_Now(dateStr, dataFormat, &clkDate);
-		  }
-		  if(adc1_tick){
-			  adc1_tick = 0;
-			  Thermistor_strCalcTempC(tempC, adc1_value_thermistor);
-			  vbat = getVBat(adc1_value_battery);//TEST
-			  battery_level = getBatteryLevel(vbat);
-			  uint16ToCharArr(batStr, battery_level);
-			  floatToCharArr(vbatStr, vbat);
-			  HAL_ADC_Start_IT(&hadc1);
-		  }
-	  }
-
-
-	  if(HAL_GPIO_ReadPin(CHARG_GPIO_Port, CHARG_Pin) == GPIO_PIN_SET){
-		  LCD_DrawText(96, 4, batStr, 0);
-	  }else{
-		  LCD_DrawText(88, 6, "~", 0);
-		  LCD_DrawText(96, 4, batStr, 0);
-	  }
-
-	  LCD_DrawText(4, 16, timeStr, 1);
-	  LCD_DrawText(16, 36, dateStr, 0);
-
-	  LCD_DrawText(8, 48, tempC, 0);
-
-	  LCD_DrawText(96, 48, vbatStr, 0);
-
-	  LCD_Update();
+    if (rtc_tick) {
+      rtc_tick = 0;
+      UI_UpdateDataFromRTC();
+      if(adc1_tick){
+           adc1_tick = 0;
+           UI_UpdateDataFromADC();
+           HAL_ADC_Start_IT(&hadc1);
+      }
+    }
+    
+    UI_Update();
+    HAL_Delay(1);
 
   }
   /* USER CODE END 3 */
@@ -327,18 +295,18 @@ static void MX_RTC_Init(void)
   /* USER CODE BEGIN Check_RTC_BKUP */
   if (HAL_RTCEx_BKUPRead(&hrtc, RTC_BKP_DR1) != 0x32F)
     {
-  	  	sTime.Hours = 0x15;
-  	    sTime.Minutes = 0x18;
-  	    sTime.Seconds = 0x40;
+  	  	sTime.Hours = 0x11;
+  	    sTime.Minutes = 0x59;
+  	    sTime.Seconds = 0x59;
 
   	    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
   	    {
   	      Error_Handler();
   	    }
-  	  DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
-  	  DateToUpdate.Month = RTC_MONTH_OCTOBER;
-  	  DateToUpdate.Date = 0x16;
-  	  DateToUpdate.Year = 0x25;
+        DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
+        DateToUpdate.Month = RTC_MONTH_OCTOBER;
+        DateToUpdate.Date = 0x16;
+        DateToUpdate.Year = 0x25;
 
   	    if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
   	    {
@@ -360,25 +328,7 @@ static void MX_RTC_Init(void)
     }
   /* USER CODE END Check_RTC_BKUP */
 
-  /** Initialize RTC and set the Time and Date
-  */
-  sTime.Hours = 0x16;
-  sTime.Minutes = 0x14;
-  sTime.Seconds = 0x0;
 
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  DateToUpdate.WeekDay = RTC_WEEKDAY_THURSDAY;
-  DateToUpdate.Month = RTC_MONTH_OCTOBER;
-  DateToUpdate.Date = 0x16;
-  DateToUpdate.Year = 0x25;
-
-  if (HAL_RTC_SetDate(&hrtc, &DateToUpdate, RTC_FORMAT_BCD) != HAL_OK)
-  {
-    Error_Handler();
-  }
   /* USER CODE BEGIN RTC_Init 2 */
   HAL_NVIC_SetPriority(RTC_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(RTC_IRQn);
@@ -446,7 +396,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(P13_GPIO_Port, P13_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LCD_LED_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LCD_A0_Pin|LCD_RST_Pin|LCD_CS_Pin, GPIO_PIN_RESET);
@@ -458,8 +408,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(P13_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin */
-  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin;
+  /*Configure GPIO pins : PA2CS_Pin PA3RST_Pin PA4CD_Pin LCD_LED_Pin */
+  GPIO_InitStruct.Pin = PA2CS_Pin|PA3RST_Pin|PA4CD_Pin|LCD_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -485,55 +435,6 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-
-void uint16ToCharArr(char *buf, uint16_t value){
-	char *p = buf;
-
-	uint16_t whole = (uint16_t)value;
-
-	uint16_t div = 1;
-	while (whole/div >= 10) {
-        div *= 10;
-	}
-
-    while (div > 0){
-    	*p++ = whole / div + '0';
-    	whole %= div;
-    	div /= 10;
-    }
-
-    *p++ = '%';
-    *p++ = '\0';
-
-}
-
-void floatToCharArr(char *buf, float value){
-	char *p = buf;
-
-	if (value < 0) {
-		value = -value;
-    }
-
-	uint16_t whole = (uint16_t)value;
-	uint16_t frac = (uint16_t)((value-(float)whole)*10.1f);
-
-	uint16_t div = 1;
-	while (whole/div >= 10) {
-        div *= 10;
-	}
-
-    while (div > 0){
-    	*p++ = whole / div + '0';
-    	whole %= div;
-    	div /= 10;
-    }
-
-    *p++ = '.';
-    *p++ = frac + '0';
-    *p++ = '\0';
-
-}
-
 /* USER CODE END 4 */
 
 /**
@@ -549,6 +450,10 @@ void Error_Handler(void)
   {
 	  HAL_GPIO_TogglePin(P13_GPIO_Port, P13_Pin);
 	  HAL_Delay(250);
+
+    LCD_Clear();
+    LCD_DrawText(8, 8, "???", 1);
+    LCD_Update();
   }
   /* USER CODE END Error_Handler_Debug */
 }

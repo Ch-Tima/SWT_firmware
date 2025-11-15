@@ -6,8 +6,11 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../Core/Src/Battery.c \
+../Core/Src/ButtonManager.c \
 ../Core/Src/RTCManager.c \
 ../Core/Src/Thermistor.c \
+../Core/Src/UIManager.c \
+../Core/Src/Utils.c \
 ../Core/Src/display.c \
 ../Core/Src/main.c \
 ../Core/Src/stm32f1xx_hal_msp.c \
@@ -18,8 +21,11 @@ C_SRCS += \
 
 OBJS += \
 ./Core/Src/Battery.o \
+./Core/Src/ButtonManager.o \
 ./Core/Src/RTCManager.o \
 ./Core/Src/Thermistor.o \
+./Core/Src/UIManager.o \
+./Core/Src/Utils.o \
 ./Core/Src/display.o \
 ./Core/Src/main.o \
 ./Core/Src/stm32f1xx_hal_msp.o \
@@ -30,8 +36,11 @@ OBJS += \
 
 C_DEPS += \
 ./Core/Src/Battery.d \
+./Core/Src/ButtonManager.d \
 ./Core/Src/RTCManager.d \
 ./Core/Src/Thermistor.d \
+./Core/Src/UIManager.d \
+./Core/Src/Utils.d \
 ./Core/Src/display.d \
 ./Core/Src/main.d \
 ./Core/Src/stm32f1xx_hal_msp.d \
@@ -48,7 +57,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/Battery.cyclo ./Core/Src/Battery.d ./Core/Src/Battery.o ./Core/Src/Battery.su ./Core/Src/RTCManager.cyclo ./Core/Src/RTCManager.d ./Core/Src/RTCManager.o ./Core/Src/RTCManager.su ./Core/Src/Thermistor.cyclo ./Core/Src/Thermistor.d ./Core/Src/Thermistor.o ./Core/Src/Thermistor.su ./Core/Src/display.cyclo ./Core/Src/display.d ./Core/Src/display.o ./Core/Src/display.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32f1xx_hal_msp.cyclo ./Core/Src/stm32f1xx_hal_msp.d ./Core/Src/stm32f1xx_hal_msp.o ./Core/Src/stm32f1xx_hal_msp.su ./Core/Src/stm32f1xx_it.cyclo ./Core/Src/stm32f1xx_it.d ./Core/Src/stm32f1xx_it.o ./Core/Src/stm32f1xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32f1xx.cyclo ./Core/Src/system_stm32f1xx.d ./Core/Src/system_stm32f1xx.o ./Core/Src/system_stm32f1xx.su
+	-$(RM) ./Core/Src/Battery.cyclo ./Core/Src/Battery.d ./Core/Src/Battery.o ./Core/Src/Battery.su ./Core/Src/ButtonManager.cyclo ./Core/Src/ButtonManager.d ./Core/Src/ButtonManager.o ./Core/Src/ButtonManager.su ./Core/Src/RTCManager.cyclo ./Core/Src/RTCManager.d ./Core/Src/RTCManager.o ./Core/Src/RTCManager.su ./Core/Src/Thermistor.cyclo ./Core/Src/Thermistor.d ./Core/Src/Thermistor.o ./Core/Src/Thermistor.su ./Core/Src/UIManager.cyclo ./Core/Src/UIManager.d ./Core/Src/UIManager.o ./Core/Src/UIManager.su ./Core/Src/Utils.cyclo ./Core/Src/Utils.d ./Core/Src/Utils.o ./Core/Src/Utils.su ./Core/Src/display.cyclo ./Core/Src/display.d ./Core/Src/display.o ./Core/Src/display.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32f1xx_hal_msp.cyclo ./Core/Src/stm32f1xx_hal_msp.d ./Core/Src/stm32f1xx_hal_msp.o ./Core/Src/stm32f1xx_hal_msp.su ./Core/Src/stm32f1xx_it.cyclo ./Core/Src/stm32f1xx_it.d ./Core/Src/stm32f1xx_it.o ./Core/Src/stm32f1xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32f1xx.cyclo ./Core/Src/system_stm32f1xx.d ./Core/Src/system_stm32f1xx.o ./Core/Src/system_stm32f1xx.su
 
 .PHONY: clean-Core-2f-Src
 

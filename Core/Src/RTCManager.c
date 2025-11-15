@@ -2,12 +2,13 @@
  * RTCManager.c
  *
  *  Created on: Oct 20, 2025
- *      Author: tim
+ *      Author: Ch-Tima
  */
 
 #include "RTCManager.h"
 
 extern RTC_HandleTypeDef hrtc;
+extern  RTC_TimeTypeDef clkTime;
 const static char *weekDays[7] = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"};
 
 void Get_Time_Now(char *timeStr, RTC_TimeTypeDef *clkTime){
@@ -56,4 +57,19 @@ void Get_Date_Now(char *dateStr, uint8_t format, RTC_DateTypeDef *clkDate){
 
 
 		dateStr[pos-1] = '\0';
+}
+
+void Update_RTCTime(uint8_t h, uint8_t m, uint8_t s){
+	if(h > 23) h = 0;
+	if(m > 59) m = 0;
+	if(s > 59) s = 0;
+
+	clkTime.Hours = h;
+	clkTime.Minutes = m;
+	clkTime.Seconds = s;
+
+	if (HAL_RTC_SetTime(&hrtc, &clkTime, RTC_FORMAT_BIN) != HAL_OK)
+	{
+	  Error_Handler();
+	}
 }

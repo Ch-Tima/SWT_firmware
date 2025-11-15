@@ -1,2 +1,3 @@
-../Core/Src/RTCManager.c:13:6:Get_Time_Now	16	static
-../Core/Src/RTCManager.c:26:6:Get_Date_Now	32	static
+../Core/Src/RTCManager.c:14:6:Get_Time_Now	16	static
+../Core/Src/RTCManager.c:27:6:Get_Date_Now	32	static
+../Core/Src/RTCManager.c:62:6:Update_RTCTime	16	static

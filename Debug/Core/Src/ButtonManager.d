@@ -1,4 +1,5 @@
-Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
+Core/Src/ButtonManager.o: ../Core/Src/ButtonManager.c \
+ ../Core/Inc/ButtonManager.h ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h \
  ../Core/Inc/stm32f1xx_hal_conf.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rcc.h \
@@ -26,13 +27,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h \
- ../Core/Inc/display.h ../Core/Inc/RTCManager.h ../Core/Inc/Thermistor.h \
- ../Core/Inc/Battery.h ../Core/Inc/UIManager.h ../Core/Inc/display.h \
- ../Core/Inc/Battery.h ../Core/Inc/Thermistor.h ../Core/Inc/RTCManager.h \
- ../Core/Inc/ButtonManager.h ../Core/Inc/main.h \
- ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103x6.h \
- ../Core/Inc/Utils.h ../Core/Inc/UI/UI_SetTime.h \
- ../Core/Inc/ButtonManager.h ../Core/Inc/Utils.h
+ ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103x6.h
+../Core/Inc/ButtonManager.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -61,19 +57,4 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_rtc_ex.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_spi.h:
-../Core/Inc/display.h:
-../Core/Inc/RTCManager.h:
-../Core/Inc/Thermistor.h:
-../Core/Inc/Battery.h:
-../Core/Inc/UIManager.h:
-../Core/Inc/display.h:
-../Core/Inc/Battery.h:
-../Core/Inc/Thermistor.h:
-../Core/Inc/RTCManager.h:
-../Core/Inc/ButtonManager.h:
-../Core/Inc/main.h:
 ../Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103x6.h:
-../Core/Inc/Utils.h:
-../Core/Inc/UI/UI_SetTime.h:
-../Core/Inc/ButtonManager.h:
-../Core/Inc/Utils.h:
