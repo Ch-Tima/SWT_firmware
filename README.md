@@ -41,6 +41,9 @@ It displays **time, date, temperature**, and includes a **settings menu**.
 - **STM32CubeMX** (included with CubeIDE)
 - **ST-Link v2** or **OpenOCD**
 
+## Photo
+<img src="res/foto.webp">
+
 ## Developer
 
 - **Name**: Tymofii
